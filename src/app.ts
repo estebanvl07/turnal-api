@@ -1,18 +1,23 @@
-import express from "express"
-import cors from "cors"
-import routes from "./routes"
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import routes from "@/routes";
 
-const app = express()
+dotenv.config();
 
-app.use(cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    methods: [""]
-}))
+const app = express();
 
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  })
+);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // ALL ROUTES
-app.use("/api", routes)
+app.use("/api", routes);
 
-export default app
+export default app;
