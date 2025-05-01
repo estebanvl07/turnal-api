@@ -1,18 +1,15 @@
 import express from "express";
-import cors from "cors";
 import dotenv from "dotenv";
 import routes from "@/routes";
+import helmet from "helmet";
+import cors from "cors";
 
 dotenv.config();
 
 const app = express();
 
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  })
-);
+app.use(helmet());
+app.use(cors({ origin: "http://localhost:5173" }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -20,4 +17,4 @@ app.use(express.urlencoded({ extended: true }));
 // ALL ROUTES
 app.use("/api", routes);
 
-export default app;
+export { app };

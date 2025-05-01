@@ -1,8 +1,11 @@
-import app from './app'; 
-import { PORT } from 'config/constants';
+import http from "http";
+import { app } from "./app";
+import { initWebSocketServer } from "./utils/websocket";
+import { PORT } from "config/constants";
 
-// TODO: connect to DB
+const expressServer = http.createServer(app);
+initWebSocketServer(expressServer);
 
-app.listen(PORT, () => {
-  console.log(`server reuning on port, ${PORT} 🚀`)
+expressServer.listen(PORT, () => {
+  console.log(`🚀 Server running on port, ${PORT}`);
 });
