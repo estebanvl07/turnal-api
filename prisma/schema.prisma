@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+
+
+model Ips {
+  id          String   @id @default(cuid())
+  name        String
+  nit         String   @unique
+  phone       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  users       User[]
+  turns       Turn[]
+  centers     CareCenter[]
+  services    Services[] // Relación con los servicios que ofrece la IPS
+}
+
+// servicios de la ips
+model Services {
+  id        String   @id @default(cuid())
+  name      String
+  icon      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+
+  ipsId     String
+  ips       Ips      @relation(fields: [ipsId], references: [id])
+
+  careCenterServices CareCenterServices[]
+  turns Turn[]
+}
+
+// Sedes de atención
+model CareCenter {
+  id          String @id @default(cuid())
+  name        String
+  address     String
+  ipsId       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  
+  ips         Ips @relation(fields: [ipsId], references: [id])
+
+  users           User[]
+  placesOfCare    PlacesOfCare[]
+  centerServices  CareCenterServices[]
+}
+
+// servicios de cada sede
+model CareCenterServices {  
+  id           String @id @default(cuid())
+  careCenterId String
+  serviceId    String
+  prefix       String
+
+  careCenter   CareCenter @relation(fields: [careCenterId], references: [id])
+  service      Services   @relation(fields: [serviceId], references: [id])
+
+  @@unique([careCenterId, prefix])
+}
+
+// Lugares de atención (consultorio, sala de espera, etc)
+model PlacesOfCare {
+  id          String   @id @default(cuid())
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  centerId    String
+
+  center    CareCenter @relation(fields: [centerId], references: [id])
+  
+  users     User[]
+  turns     Turn[]
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPERADMIN
+}
+
+model User {
+  id        String @id @default(cuid())
+  name      String
+  email     String @unique
+  role      UserRole @default(USER)
+  password  String
+  ipsId     String 
+  centerId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  ips       Ips @relation(fields: [ipsId], references: [id])
+  center    CareCenter? @relation(fields: [centerId], references: [id])
+  
+  tokens    RefreshToken[]
+  comments  TurnComments[]
+  placesOfCare    PlacesOfCare[]
+}
+
+model RefreshToken {
+  id          String   @id @default(uuid())
+  userId      String
+  tokenHash   String   @unique
+  revoked     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Priority {
+  id    Int @id @default(autoincrement())
+  name  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  turns Turn[]
+}
+
+model Turn {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  statusId        Int
+  serviceId       String
+  userId          String?
+  isPriority      Boolean   @default(false)
+  priorityId      Int
+  placesOfCareId  String
+  ipsId           String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now())
+
+  ips           Ips @relation(fields: [ipsId], references: [id])
+  service       Services @relation(fields: [serviceId], references: [id])
+  status        TurnStatus @relation(fields: [statusId], references: [id])
+  priority      Priority @relation(fields: [priorityId], references: [id])
+  placesOfCare  PlacesOfCare @relation(fields: [placesOfCareId], references: [id])
+  
+  comments  TurnComments[]
+  @@index([ipsId, serviceId])
+}
+
+model TurnComments {
+  id        String @id @default(cuid())
+  comment   String
+  userId    String
+  turnId    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  user    User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  turn    Turn @relation(fields: [turnId], references: [id], onDelete: Cascade)
+}
+  
+model TurnStatus {
+  id    Int @id @default(autoincrement())
+  name  String @unique
+  isActive Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  turns Turn[]
+}
+
