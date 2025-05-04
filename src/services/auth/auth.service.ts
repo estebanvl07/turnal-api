@@ -4,21 +4,19 @@ import jwt from "jsonwebtoken";
 import UserService from "../user/user.service";
 import { RepositoryError, RequestError } from "@/utils/errorHandler";
 import { comparePassword, hashPassword } from "@/utils/bcrypt";
-import { JWT_SECRET } from "@/config/constants";
+import { JWT_SECRET } from "@/config/environments";
 
-import type { LoginUserPayload, RegisterUserPayload } from "./types";
+import type {
+  DataStoredInToken,
+  LoginUserPayload,
+  RegisterUserPayload,
+} from "./types";
 import { UserIncludes } from "@/types/user.types";
 
 const CredentialError = new RepositoryError({
   message: "Usuario o Contraseña incorrectos",
   code: "CREDENTIAL_ERROR",
 });
-
-type DataStoredInToken = {
-  userId: string;
-  ipsId: string;
-  centerId?: string;
-};
 
 class AuthService {
   public userServices = UserService;
@@ -55,32 +53,25 @@ class AuthService {
 
       const hashedPassword = hashPassword(password);
 
-      const user = await prisma.user.create({
+      const ips = await prisma.ips.create({
         data: {
-          name,
-          email,
-          password: hashedPassword,
-          role: "SUPERADMIN",
-          ips: {
-            connect: {
-              name: ipsName,
-              nit,
-              phone,
+          name: ipsName,
+          nit,
+          phone,
+          users: {
+            create: {
+              name,
+              email,
+              password: hashedPassword,
+              role: "SUPERADMIN",
             },
           },
         },
       });
 
-      return user;
+      return ips;
     } catch (error) {
-      if (error instanceof RepositoryError) {
-        throw new RequestError({
-          status: 400,
-          message: error.message,
-          code: error.code,
-          payload: error.payload,
-        });
-      }
+      throw error;
     }
   }
   public async signIn(payload: LoginUserPayload) {
@@ -120,14 +111,7 @@ class AuthService {
         token,
       };
     } catch (error) {
-      if (error instanceof RepositoryError) {
-        throw new RequestError({
-          status: 400,
-          message: error.message,
-          code: error.code,
-          payload: error.payload,
-        });
-      }
+      throw error;
     }
   }
 

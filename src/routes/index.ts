@@ -1,14 +1,20 @@
 import express from "express";
-import { router as userRoutes } from "./v1/users";
-import { router as authRoutes } from "./v1/auth";
+import { authJWT } from "@/middlewares/authJWT";
+
+import { router as userRoutes } from "./users";
+import { router as authRoutes } from "./auth";
+import { router as centerRoutes } from "./centers";
+import { router as ipsRoutes } from "./ips";
+import { router as serviceRoutes } from "./services";
 
 const router = express();
-const version = "/v1";
 
-// route structure -> /api/users/...etc
-// ALL ROUTES
+// route structure -> /api/[version]/[route]/...etc
 
-router.use(version, userRoutes);
-router.use(version, authRoutes);
+router.use("/auth", authRoutes);
+router.use("/ips", authJWT, ipsRoutes);
+router.use("/services", authJWT, serviceRoutes);
+router.use("/centers", authJWT, centerRoutes);
+router.use("/users", authJWT, userRoutes);
 
 export default router;

@@ -7,13 +7,21 @@ import type {
 } from "@/services/auth/types";
 
 export const registerUser = async (req: Request, res: Response) => {
-  const data = req.body as RegisterUserPayload;
-  const user = await AuthService.signUp(data);
-  res.status(200).json(user);
+  try {
+    const data = req.body as RegisterUserPayload;
+    const user = await AuthService.signUp(data);
+    res.status(200).json({ data: user });
+  } catch (error) {
+    res.status(400).json(error);
+  }
 };
 
 export const loginUser = async (req: Request, res: Response) => {
-  const data = req.body as LoginUserPayload;
-  const user = await AuthService.signIn(data);
-  res.status(200).json(user);
+  try {
+    const data = req.body as LoginUserPayload;
+    const user = await AuthService.signIn(data);
+    res.status(200).json({ data: user });
+  } catch (error) {
+    res.status(400).json(error);
+  }
 };

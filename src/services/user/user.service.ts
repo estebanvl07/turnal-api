@@ -1,4 +1,6 @@
 import { UserIncludes } from "@/types/user.types";
+import { prisma } from "@/utils/db";
+import { RepositoryError } from "@/utils/errorHandler";
 
 interface UserResponse {
   id: string;
@@ -26,6 +28,25 @@ class UserService {
       createdAt,
       updatedAt,
     };
+  }
+
+  public async getUserById(id: string) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: {
+          id,
+        },
+      });
+
+      if (!user) {
+        throw new RepositoryError({
+          message: "Usuario no encontrado",
+          code: "USER_NOT_FOUND",
+        });
+      }
+    } catch (error) {
+      throw error;
+    }
   }
 }
 
