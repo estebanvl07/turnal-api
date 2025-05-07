@@ -47,7 +47,23 @@ class ServicesService {
           },
         },
       });
-      return services;
+      const [turnCount, turnSuccess, turnPending, turnCancel] =
+        await Promise.all([
+          prisma.turn.count({ where: { ipsId } }),
+          prisma.turn.count({ where: { ipsId, statusId: 1 } }),
+          prisma.turn.count({ where: { ipsId, statusId: 2 } }),
+          prisma.turn.count({ where: { ipsId, statusId: 3 } }),
+        ]);
+
+      return {
+        services,
+        statistics: {
+          turnCount,
+          turnSuccess,
+          turnPending,
+          turnCancel,
+        },
+      };
     } catch (error) {
       throw error;
     }
