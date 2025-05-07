@@ -6,7 +6,7 @@ import usersService from "@/services/user/user.service";
 import { RequestError } from "@/utils/errorHandler";
 import { DataStoredInToken } from "@/services/auth/types";
 import { prisma } from "@/utils/db";
-import { UserIncludes } from "@/types/user.types";
+import { UserIncludes } from "@/types/prisma-types";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare global {
@@ -16,6 +16,7 @@ declare global {
       ipsId?: string;
       isAuthenticated?: boolean;
       isAdmin?: boolean;
+      isSuperAdmin?: boolean;
     }
   }
 }
@@ -48,7 +49,8 @@ export const authJWT: RequestHandler = async (req, res, next) => {
       if (foundUser) {
         req.user = foundUser;
         req.isAuthenticated = true;
-        req.isAdmin = foundUser.role === "SUPERADMIN";
+        req.isAdmin = foundUser.role === "ADMIN";
+        req.isSuperAdmin = foundUser.role === "SUPERADMIN";
         req.ipsId = foundUser.ipsId;
         next();
       } else {

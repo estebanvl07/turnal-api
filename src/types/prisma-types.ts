@@ -50,9 +50,9 @@ export enum UserRole {
 
 export type UserIncludes = User & {
   ips?: Ips;
+  placesOfCare?: PlacesOfCareIncludes;
   center?: CareCenterIncludes;
   comments?: TurnCommentsIncludes[];
-  placesOfCare?: PlacesOfCareIncludes[];
 };
 
 export type TurnIncludes = Turn & {

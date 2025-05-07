@@ -107,13 +107,15 @@ model User {
   centerId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
+  placesOfCareId String?
+  state     Int @default(1) // 1: activo, 2: inactivo
 
   ips       Ips @relation(fields: [ipsId], references: [id])
   center    CareCenter? @relation(fields: [centerId], references: [id])
+  placeOfCare    PlacesOfCare? @relation(fields: [placesOfCareId], references: [id])
   
   tokens    RefreshToken[]
   comments  TurnComments[]
-  placesOfCare    PlacesOfCare[]
 }
 
 model RefreshToken {

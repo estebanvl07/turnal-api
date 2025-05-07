@@ -6,7 +6,7 @@ import { CreateServiceParams } from "@/services/service/type";
 
 export const createService: RequestHandler = async (req, res) => {
   try {
-    if (!req.isAdmin) {
+    if (!req.isSuperAdmin) {
       throw new RequestError({
         status: HTTPStatusCode.Unauthorized,
         message: "No tienes permiso para crear un servicio",
