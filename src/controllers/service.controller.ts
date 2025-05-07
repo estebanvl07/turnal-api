@@ -1,8 +1,8 @@
 import servicesService from "@/services/service/services.service";
 import { RequestHandler } from "express";
-import { Prisma } from "@prisma/client";
 import { RequestError } from "@/utils/errorHandler";
 import HTTPStatusCode from "@/config/httpStatusCode";
+import { CreateServiceParams } from "@/services/service/type";
 
 export const createService: RequestHandler = async (req, res) => {
   try {
@@ -13,7 +13,7 @@ export const createService: RequestHandler = async (req, res) => {
         code: "UNAUTHORIZED",
       });
     }
-    const data = req.body as Prisma.ServicesUncheckedCreateInput;
+    const data = req.body as Omit<CreateServiceParams, "ipsId">;
     const service = await servicesService.createService({
       ...data,
       ipsId: req.ipsId!,

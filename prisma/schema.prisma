@@ -36,6 +36,7 @@ model Services {
   icon      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
+  state     Int @default(1) // 1: activo, 2: inactivo
 
 
   ipsId     String
@@ -59,6 +60,7 @@ model CareCenter {
   users           User[]
   placesOfCare    PlacesOfCare[]
   centerServices  CareCenterServices[]
+  
 }
 
 // servicios de cada sede
@@ -67,6 +69,7 @@ model CareCenterServices {
   careCenterId String
   serviceId    String
   prefix       String
+  state        Int @default(1) // 1: activo, 2: inactivo
 
   careCenter   CareCenter @relation(fields: [careCenterId], references: [id])
   service      Services   @relation(fields: [serviceId], references: [id])

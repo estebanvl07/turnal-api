@@ -27,8 +27,16 @@ export const authJWT: RequestHandler = async (req, res, next) => {
       (req.header("Authorization") ? req.header("Authorization") : null);
 
     if (authorization) {
+      let token;
+
+      if (authorization.startsWith("Bearer")) {
+        token = authorization.split(" ")[1];
+      } else {
+        token = authorization;
+      }
+
       const verificationResponse = jwt.verify(
-        authorization,
+        token,
         JWT_SECRET
       ) as DataStoredInToken;
       const userId = verificationResponse.userId;
