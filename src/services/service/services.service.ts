@@ -31,7 +31,18 @@ class ServicesService {
       throw error;
     }
   }
-
+  public async getServiceById({ id }: { id: string }) {
+    try {
+      const service = await prisma.services.findUnique({
+        where: {
+          id,
+        },
+      });
+      return service;
+    } catch (error) {
+      throw error;
+    }
+  }
   public async getServices({ ipsId }: { ipsId: string }) {
     try {
       const services = await prisma.services.findMany({

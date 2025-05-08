@@ -1,18 +1,35 @@
 import centerService from "@/services/center/center.service";
 import { Prisma } from "@prisma/client";
 import { RequestHandler } from "express";
+import { CreateCenterInput } from "@/services/center/types";
+import { RequestError } from "@/utils/errorHandler";
+import HTTPStatusCode from "@/config/httpStatusCode";
 
 export const createCenter: RequestHandler = async (req, res) => {
   try {
-    const data = req.body as Prisma.CareCenterUncheckedCreateInput;
+    if (!req.isSuperAdmin && !req.isAdmin) {
+      throw new RequestError({
+        status: HTTPStatusCode.Unauthorized,
+        message: "No tienes permiso para crear un centro",
+        code: "UNAUTHORIZED",
+      });
+    }
 
-    const center = await centerService.createCenter({
+    const data = req.body as Omit<CreateCenterInput, "ipsId">;
+
+    const payload = {
       ...data,
       ipsId: req.ipsId!,
-    });
+    };
+
+    const center = await centerService.createCenter(payload);
     res.status(200).json({ data: center });
   } catch (error) {
-    res.status(400).json(error);
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
   }
 };
 

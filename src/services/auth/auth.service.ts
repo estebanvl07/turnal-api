@@ -11,7 +11,7 @@ import type {
   LoginUserPayload,
   RegisterUserPayload,
 } from "./types";
-import { UserIncludes } from "@/types/user.types";
+import { UserIncludes } from "@/types/prisma-types";
 
 const CredentialError = new RepositoryError({
   message: "Usuario o Contraseña incorrectos",
