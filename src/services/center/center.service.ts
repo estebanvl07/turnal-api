@@ -75,6 +75,14 @@ class CenterService {
         where: {
           ipsId,
         },
+        include: {
+          placesOfCare: true,
+          centerServices: {
+            include: {
+              service: true,
+            },
+          },
+        },
       });
 
       const ips = await prisma.ips.findUnique({
