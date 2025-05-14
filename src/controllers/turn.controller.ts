@@ -1,25 +1,118 @@
+import HTTPStatusCode from "@/config/httpStatusCode";
+import servicesService from "@/services/service/services.service";
 import turnService from "@/services/turn/turn.service";
 import { CreateTurnInput } from "@/services/turn/type";
+import { RequestError } from "@/utils/errorHandler";
 import { Prisma } from "@prisma/client";
 import { RequestHandler } from "express";
 
 export const createTurn: RequestHandler = async (req, res) => {
   try {
-    const ipsId = req.ipsId! as string;
     const user = req.user;
     const body = req.body as CreateTurnInput;
+
+    const service = await servicesService.getServiceById({
+      id: body.serviceId,
+      centerId: user?.centerId!,
+    });
 
     const payload = {
       ...body,
       ipsId: req.ipsId!,
       userId: user?.id!,
       isPriority: Boolean(body.priorityId),
+      placesOfCareId: req.isSuperAdmin
+        ? body.placesOfCareId
+        : service?.careCenterServices?.[0].placesOfCare?.[0].id!,
       statusId: 1,
     };
 
     const turn = await turnService.createTurn(payload);
-    res.status(200).json({ data: turn });
+    res.status(HTTPStatusCode.OK).json({ data: turn });
   } catch (error) {
-    res.status(400).json(error);
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};
+
+export const getTurns: RequestHandler = async (req, res) => {
+  try {
+    const ipsId = req.ipsId! as string;
+
+    if (req.isSuperAdmin) {
+      const turn = await turnService.getTurns({ ipsId });
+      res.status(HTTPStatusCode.OK).json({ data: turn });
+      return;
+    }
+
+    const centerId = req.user?.centerId! as string;
+    const turn = await turnService.getTurns({ ipsId, centerId });
+    res.status(HTTPStatusCode.OK).json({ data: turn });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};
+
+export const createComment: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { comment } = req.body;
+
+    const payload = {
+      turnId: Number(id),
+      userId: req.user?.id!,
+      comment,
+    } as Prisma.TurnCommentsUncheckedCreateInput;
+
+    const turn = await turnService.createComment(payload);
+    res.status(HTTPStatusCode.OK).json({ data: turn });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};
+
+export const getTurnById: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const turn = await turnService.getTurnById(Number(id));
+    res.status(HTTPStatusCode.OK).json({ data: turn });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};
+
+export const updateStateTurn: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { state } = req.body;
+
+    console.log(id, state);
+
+    const turn = await turnService.updateStateTurn({
+      id: Number(id),
+      state: Number(state),
+    });
+    res.status(HTTPStatusCode.OK).json({ data: turn });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
   }
 };

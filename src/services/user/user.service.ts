@@ -1,4 +1,5 @@
 import { UserIncludes } from "@/types/prisma-types";
+import { hashPassword } from "@/utils/bcrypt";
 import { prisma } from "@/utils/db";
 import { RepositoryError } from "@/utils/errorHandler";
 import { Prisma } from "@prisma/client";
@@ -42,16 +43,18 @@ class UserService {
     };
   }
 
-  public async getUserIpsId(id: string) {
+  public async getUserIpsId(id: string, centerId?: string) {
     try {
       const user = await prisma.user.findMany({
         where: {
           ipsId: id,
+          centerId,
         },
         include: {
           center: true,
           placeOfCare: {
             include: {
+              centerService: true,
               turns: true,
             },
           },
@@ -87,12 +90,51 @@ class UserService {
 
   public async createUser(data: Prisma.UserUncheckedCreateInput) {
     try {
+      const { password, ...rest } = data;
+
+      const hashedPassword = hashPassword(password);
+
       const user = await prisma.user.create({
-        data,
+        data: {
+          ...rest,
+          password: hashedPassword,
+        },
         include: {
           center: true,
           placeOfCare: true,
           ips: true,
+        },
+      });
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async changeCenter(userId: string, centerId: string) {
+    try {
+      const user = await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          centerId,
+        },
+      });
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async changePlace(userId: string, placeOfCareId: string) {
+    try {
+      const user = await prisma.placesOfCare.update({
+        where: {
+          id: placeOfCareId,
+        },
+        data: {
+          userId,
         },
       });
       return user;

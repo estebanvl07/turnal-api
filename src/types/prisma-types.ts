@@ -29,6 +29,7 @@ export type CareCenterIncludes = CareCenter & {
   users?: User[];
   placesOfCare?: PlacesOfCareIncludes[];
   centerServices?: CareCenterServiceInclude[];
+  turns?: TurnIncludes[];
 };
 
 export type CareCenterServiceInclude = CareCenterServices & {

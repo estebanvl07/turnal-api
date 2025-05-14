@@ -60,7 +60,7 @@ model CareCenter {
   users           User[]
   placesOfCare    PlacesOfCare[]
   centerServices  CareCenterServices[]
-  
+  turns           Turn[]
 }
 
 // servicios de cada sede
@@ -81,17 +81,18 @@ model CareCenter {
 
 // Lugares de atención (consultorio, sala de espera, etc)
 model PlacesOfCare {
-  id          String   @id @default(cuid())
-  name        String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
-  centerId    String
+  id              String   @id @default(cuid())
+  name            String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now())
+  centerId        String
   centerServiceId String
+  userId          String?
 
-  center    CareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
-  centerService CareCenterServices @relation(fields: [centerServiceId], references: [id], onDelete: Cascade)
+  center          CareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  centerService   CareCenterServices @relation(fields: [centerServiceId], references: [id], onDelete: Cascade)
+  user            User? @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  users     User[]
   turns     Turn[]
 }
 
@@ -111,13 +112,12 @@ model User {
   centerId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
-  placesOfCareId String?
   state     Int @default(1) // 1: activo, 2: inactivo
 
   ips       Ips @relation(fields: [ipsId], references: [id])
   center    CareCenter? @relation(fields: [centerId], references: [id])
-  placeOfCare    PlacesOfCare? @relation(fields: [placesOfCareId], references: [id])
   
+  placeOfCare    PlacesOfCare[]  
   tokens    RefreshToken[]
   comments  TurnComments[]
 }
@@ -148,6 +148,7 @@ model Turn {
   code            String    
   statusId        Int
   serviceId       String
+  careCenterId    String?
   identification  String
   userId          String?
   isPriority      Boolean   @default(false)
@@ -163,6 +164,7 @@ model Turn {
   status        TurnStatus @relation(fields: [statusId], references: [id])
   priority      Priority? @relation(fields: [priorityId], references: [id])
   placesOfCare  PlacesOfCare @relation(fields: [placesOfCareId], references: [id])
+  careCenter    CareCenter? @relation(fields: [careCenterId], references: [id])
   
   comments  TurnComments[]
   @@index([ipsId, serviceId])

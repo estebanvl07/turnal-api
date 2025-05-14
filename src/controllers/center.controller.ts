@@ -37,8 +37,6 @@ export const getCenters: RequestHandler = async (req, res) => {
   try {
     const centers = await centerService.getCenters({ ipsId: req.ipsId! });
 
-    console.log(centers);
-
     res.status(200).json({ data: centers });
   } catch (error) {
     res.status(400).json(error);

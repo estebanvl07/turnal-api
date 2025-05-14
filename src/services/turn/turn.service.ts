@@ -34,7 +34,7 @@ class TurnService {
     /**
      * Obtiene el prefijo del centro de atencion de servicio
      */
-    const { prefix } = placeOfCare.centerService;
+    const { prefix, careCenterId } = placeOfCare.centerService;
 
     /**
      * Crea un objeto con la fecha actual y las horas en 0
@@ -62,7 +62,94 @@ class TurnService {
      * Crea el turno con el codigo unico
      */
     const turn = await prisma.turn.create({
-      data: { ...rest, code, placesOfCareId },
+      data: { ...rest, code, placesOfCareId, careCenterId },
+    });
+    return turn;
+  }
+
+  public async createComment(data: Prisma.TurnCommentsUncheckedCreateInput) {
+    const comment = await prisma.turnComments.create({ data });
+    return comment;
+  }
+
+  public async getTurnById(id: number) {
+    const turn = await prisma.turn.findUnique({
+      where: { id },
+      include: {
+        placesOfCare: {
+          include: {
+            centerService: true,
+            user: true,
+          },
+        },
+        comments: {
+          include: {
+            user: true,
+          },
+        },
+        service: true,
+        priority: true,
+        status: true,
+      },
+    });
+    return turn;
+  }
+
+  public async getTurns(params: { ipsId: string; centerId?: string }) {
+    const { ipsId, centerId } = params;
+
+    const centersTurn = await prisma.careCenter.findMany({
+      where: { ipsId, id: centerId },
+      include: {
+        placesOfCare: {
+          include: {
+            centerService: true,
+            user: true,
+          },
+        },
+        turns: {
+          include: {
+            placesOfCare: {
+              include: {
+                centerService: true,
+                user: true,
+              },
+            },
+            service: true,
+            priority: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    const turns = centersTurn.map((center) => ({
+      centerId: center.id,
+      name: center.name,
+      turns: center.turns,
+    }));
+    return turns;
+  }
+
+  public async updateStateTurn(data: { id: number; state: number }) {
+    const { id, state } = data;
+
+    const turn = await prisma.turn.update({
+      where: { id },
+      data: {
+        statusId: Number(state),
+      },
+      include: {
+        placesOfCare: {
+          include: {
+            centerService: true,
+            user: true,
+          },
+        },
+        service: true,
+        priority: true,
+        status: true,
+      },
     });
     return turn;
   }

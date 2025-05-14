@@ -28,7 +28,11 @@ export const getServices: RequestHandler = async (req, res) => {
   try {
     const ipsId = req.ipsId!;
 
-    const services = await servicesService.getServices({ ipsId });
+    const services = req.isSuperAdmin
+      ? await servicesService.getServices({ ipsId })
+      : await servicesService.getCenterService({
+          centerId: req.user?.centerId!,
+        });
     res.status(200).json({ data: services });
   } catch (error) {
     res.status(400).json(error);

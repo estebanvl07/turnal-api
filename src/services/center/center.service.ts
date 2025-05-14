@@ -43,7 +43,7 @@ class CenterService {
           prisma.careCenterServices.create({
             data: {
               careCenterId: center.id,
-              serviceId,
+              serviceId: serviceId!,
               prefix,
             },
           })
@@ -59,6 +59,7 @@ class CenterService {
         name: places[idx].name,
         centerServiceId: cs.id,
         centerId: center.id,
+        userId: places[idx].userId,
       }));
 
       await prisma.placesOfCare.createMany({
@@ -76,7 +77,15 @@ class CenterService {
           ipsId,
         },
         include: {
-          placesOfCare: true,
+          placesOfCare: {
+            include: {
+              centerService: {
+                include: {
+                  service: true,
+                },
+              },
+            },
+          },
           centerServices: {
             include: {
               service: true,
