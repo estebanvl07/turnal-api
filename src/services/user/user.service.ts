@@ -160,6 +160,23 @@ class UserService {
       throw error;
     }
   }
+
+  public async changeState(id: string, state: number) {
+    try {
+      const user = prisma.user.update({
+        where: {
+          id,
+        },
+        data: {
+          state,
+        },
+      });
+
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export default new UserService();
