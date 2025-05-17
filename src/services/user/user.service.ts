@@ -163,7 +163,7 @@ class UserService {
 
   public async changeState(id: string, state: number) {
     try {
-      const user = prisma.user.update({
+      const user = await prisma.user.update({
         where: {
           id,
         },
@@ -171,6 +171,22 @@ class UserService {
           state,
         },
       });
+
+      if (user.state === 2) {
+        // si el usuario tenia algun lugar asignado lo quita
+        await prisma.placesOfCare.updateMany({
+          where: { userId: user.id },
+          data: { userId: null },
+        });
+
+        // si el usuario tenia turnos asignados en estado pendiente, lo retira
+        await prisma.turn.updateMany({
+          where: { statusId: 1, userId: user.id },
+          data: {
+            userId: null,
+          },
+        });
+      }
 
       return user;
     } catch (error) {
