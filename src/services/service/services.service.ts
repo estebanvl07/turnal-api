@@ -154,6 +154,47 @@ class ServicesService {
       throw error;
     }
   }
+
+  public async updateService(
+    id: string,
+    data: Prisma.ServicesUncheckedUpdateInput
+  ) {
+    try {
+      const service = await prisma.services.update({
+        where: {
+          id,
+        },
+        data,
+      });
+      return service;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async updateState(id: string, state: number) {
+    try {
+      const service = prisma.services.update({
+        where: {
+          id,
+        },
+        data: {
+          state,
+          careCenterServices: {
+            updateMany: {
+              where: {
+                serviceId: id,
+              },
+              data: state,
+            },
+          },
+        },
+      });
+      return service;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export default new ServicesService();
