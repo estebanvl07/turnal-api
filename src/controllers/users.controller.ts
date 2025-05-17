@@ -120,3 +120,26 @@ export const changePlace: RequestHandler = async (req, res) => {
     }
   }
 };
+
+export const updateUser: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+    if (req.user!.role === "USER") {
+      throw new RequestError({
+        status: HTTPStatusCode.Unauthorized,
+        message: "No tienes permiso para editar el usuario",
+        code: "UNAUTHORIZED",
+      });
+    }
+
+    const user = await UserService.UpdateUser(id, data);
+    res.status(HTTPStatusCode.OK).json({ data: user });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};

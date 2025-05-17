@@ -5,6 +5,7 @@ import {
   getUsersByCenterId,
   changeCenter,
   changePlace,
+  updateUser,
 } from "@controllers/users.controller";
 
 const router = express();
@@ -15,6 +16,8 @@ const router = express();
 router.get("/", getUsers);
 router.get("/:centerId", getUsersByCenterId);
 router.post("/", createUser);
+
+router.put("/:id", updateUser);
 router.patch("/:userId/:centerId", changeCenter);
 router.patch("/:userId/:placeOfCareId/places", changePlace);
 // router.put("/users/:id", getUser)

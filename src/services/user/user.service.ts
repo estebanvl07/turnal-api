@@ -142,6 +142,24 @@ class UserService {
       throw error;
     }
   }
+
+  public async UpdateUser(
+    userId: string,
+    data: Prisma.UserUncheckedUpdateInput
+  ) {
+    try {
+      const user = await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data,
+      });
+
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export default new UserService();
