@@ -74,10 +74,20 @@ model CareCenter {
     careCenter   CareCenter @relation(fields: [careCenterId], references: [id], onDelete: Cascade)
     service      Services   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
-    placesOfCare PlacesOfCare[]
+    placeOfCareServices PlaceOfCareServices[]
 
     @@unique([careCenterId, prefix])
   }
+
+// servicios de cada lugar de atención
+model PlaceOfCareServices {
+  id            String @id @default(cuid())
+  placeOfCareId String
+  serviceId     String
+
+  placeOfCare  PlacesOfCare @relation(fields: [placeOfCareId], references: [id], onDelete: Cascade)
+  service      CareCenterServices   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
 
 // Lugares de atención (consultorio, sala de espera, etc)
 model PlacesOfCare {
@@ -86,13 +96,12 @@ model PlacesOfCare {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now())
   centerId        String
-  centerServiceId String
   userId          String?
 
   center          CareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
-  centerService   CareCenterServices @relation(fields: [centerServiceId], references: [id], onDelete: Cascade)
-  user            User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User? @relation(fields: [userId], references: [id])
   
+  services  PlaceOfCareServices[]
   turns     Turn[]
 }
 

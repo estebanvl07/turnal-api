@@ -1,6 +1,16 @@
 import { prisma } from "@/utils/db";
 
 class CareService {
+  // public createCareCenterService({ centerId, servicesId }: { centerId: string, servicesId: string[] }) {
+  //   prisma.careCenterServices.createMany({
+  //     data: servicesId.map((serviceId) => ({
+  //       careCenterId: centerId,
+  //       serviceId,
+  //       prefix: ""
+  //     })),
+  //   })
+  // }
+
   public getCareServicesByCenter({ centerId }: { centerId: string }) {
     try {
       const careServices = prisma.careCenterServices.findMany({
@@ -9,7 +19,6 @@ class CareService {
         },
         include: {
           careCenter: true,
-          placesOfCare: true,
           service: true,
         },
       });
@@ -27,7 +36,6 @@ class CareService {
         },
         include: {
           careCenter: true,
-          placesOfCare: true,
           service: true,
         },
       });

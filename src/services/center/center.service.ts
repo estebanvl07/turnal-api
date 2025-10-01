@@ -12,20 +12,10 @@ class CenterService {
    */
   public async createCenter(data: CreateCenterInput) {
     const { places, ...centerData } = data;
-    /**
-     * Filtra los prefix para que no se repitan
-     * y crea un set de prefix unicos
-     */
-    const seen = new Set();
-    const uniqueCenterServices = places.filter(({ prefix }) => {
-      if (seen.has(prefix)) return false;
-      seen.add(prefix);
-      return true;
-    });
 
     /**
      * Crea un centro de atencion y
-     * sus respectivos centros de atencion de servicio
+     * sus respectivos lugares de atencion
      * en una sola transaccion
      */
     return prisma.$transaction(async (prisma) => {
@@ -33,34 +23,13 @@ class CenterService {
         data: centerData,
       });
 
-      /**
-       * Crea los centros de atencion de servicio
-       * y les asigna el id del centro de atencion
-       * recien creado
-       */
-      const createdCenterServices = await Promise.all(
-        uniqueCenterServices.map(({ serviceId, prefix }) =>
-          prisma.careCenterServices.create({
-            data: {
-              careCenterId: center.id,
-              serviceId: serviceId!,
-              prefix,
-            },
-          })
-        )
-      );
-
-      /**
-       * Crea los lugares de atencion
-       * y les asigna el id del centro de atencion de servicio
-       * recien creado
-       */
-      const manyPlacesOfCare = createdCenterServices.map((cs, idx) => ({
-        name: places[idx].name,
-        centerServiceId: cs.id,
-        centerId: center.id,
-        userId: places[idx].userId,
-      }));
+      const manyPlacesOfCare =
+        places === ""
+          ? []
+          : places.split(",").map((place) => ({
+              name: place,
+              centerId: center.id,
+            }));
 
       await prisma.placesOfCare.createMany({
         data: manyPlacesOfCare,
@@ -77,13 +46,11 @@ class CenterService {
           ipsId,
         },
         include: {
+          ips: true,
           placesOfCare: {
             include: {
-              centerService: {
-                include: {
-                  service: true,
-                },
-              },
+              user: true,
+              services: true,
             },
           },
           centerServices: {
@@ -94,16 +61,20 @@ class CenterService {
         },
       });
 
-      const ips = await prisma.ips.findUnique({
+      return centers;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async getCurrentCenter({ centerId }: { centerId: string }) {
+    try {
+      const center = await prisma.careCenter.findFirst({
         where: {
-          id: ipsId,
+          id: centerId,
         },
       });
-
-      return {
-        ips,
-        centers,
-      };
+      return center;
     } catch (error) {
       throw error;
     }
@@ -111,9 +82,39 @@ class CenterService {
 
   public async getCenterById({ id }: { id: string }) {
     try {
-      const center = await prisma.careCenter.findUnique({
+      const center = await prisma.careCenter.findFirst({
         where: {
           id,
+        },
+        include: {
+          centerServices: {
+            include: {
+              service: true,
+            },
+          },
+          placesOfCare: {
+            include: {
+              user: true,
+              services: {
+                include: {
+                  service: {
+                    include: {
+                      service: true,
+                    },
+                  },
+                },
+              },
+              center: {
+                include: {
+                  centerServices: {
+                    include: {
+                      service: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       });
       return center;

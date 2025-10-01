@@ -1,5 +1,4 @@
 import { prisma } from "@/utils/db";
-import { Prisma } from "@prisma/client";
 import { CreateServiceParams } from "./type";
 
 class ServicesService {
@@ -7,6 +6,8 @@ class ServicesService {
 
   public async createService(data: CreateServiceParams) {
     try {
+      const centers = data.centers === "" ? [] : data.centers.split(",");
+
       const service = await prisma.services.create({
         data: {
           name: data.name,
@@ -14,7 +15,7 @@ class ServicesService {
           ipsId: data.ipsId,
           careCenterServices: {
             createMany: {
-              data: data.centers.split(",").map((center) => ({
+              data: centers.map((center) => ({
                 careCenterId: center,
                 prefix: data.prefix,
               })),
@@ -44,7 +45,13 @@ class ServicesService {
           id,
           careCenterServices: {
             some: {
-              careCenterId: centerId,
+              placeOfCareServices: {
+                some: {
+                  placeOfCare: {
+                    centerId,
+                  },
+                },
+              },
             },
           },
         },
@@ -52,7 +59,11 @@ class ServicesService {
           careCenterServices: {
             include: {
               careCenter: true,
-              placesOfCare: true,
+              placeOfCareServices: {
+                include: {
+                  placeOfCare: true,
+                },
+              },
             },
           },
         },
@@ -102,7 +113,11 @@ class ServicesService {
           careCenterServices: {
             include: {
               careCenter: true,
-              placesOfCare: true,
+              placeOfCareServices: {
+                include: {
+                  placeOfCare: true,
+                },
+              },
             },
           },
           _count: {
@@ -123,7 +138,6 @@ class ServicesService {
       throw error;
     }
   }
-
   public async getCenterService({ centerId }: { centerId: string }) {
     try {
       const services = await prisma.services.findMany({

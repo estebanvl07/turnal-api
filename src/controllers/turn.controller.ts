@@ -9,21 +9,28 @@ import { RequestHandler } from "express";
 export const createTurn: RequestHandler = async (req, res) => {
   try {
     const user = req.user;
-    const body = req.body as CreateTurnInput;
+    const body = req.body as {
+      serviceId: string;
+      identification: string;
+      date: Date;
+      priorityId: number;
+      placesOfCareId: string;
+      centerId: string;
+    };
 
-    const service = await servicesService.getServiceById({
-      id: body.serviceId,
-      centerId: user?.centerId!,
-    });
+    const careCenterId = req.isSuperAdmin ? body.centerId : req.user?.centerId!;
+    const placeOfCareId = req.isSuperAdmin
+      ? body.placesOfCareId
+      : req.user?.placesOfCare?.id!;
 
     const payload = {
-      ...body,
       ipsId: req.ipsId!,
       userId: user?.id!,
       isPriority: Boolean(body.priorityId),
-      placesOfCareId: req.isSuperAdmin
-        ? body.placesOfCareId
-        : service?.careCenterServices?.[0].placesOfCare?.[0].id!,
+      placesOfCareId: placeOfCareId,
+      identification: body.identification,
+      serviceId: body.serviceId,
+      careCenterId,
       statusId: 1,
     };
 
@@ -50,6 +57,20 @@ export const getTurns: RequestHandler = async (req, res) => {
 
     const centerId = req.user?.centerId! as string;
     const turn = await turnService.getTurns({ ipsId, centerId });
+    res.status(HTTPStatusCode.OK).json({ data: turn });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};
+
+export const getTurnsByUser: RequestHandler = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const turn = await turnService.getTurnsByUser(userId);
     res.status(HTTPStatusCode.OK).json({ data: turn });
   } catch (error) {
     if (error instanceof RequestError) {

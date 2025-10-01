@@ -30,3 +30,49 @@ export const createPlace: RequestHandler = async (req, res): Promise<any> => {
     return res.status(HTTPStatusCode.BadRequest).json(error);
   }
 };
+
+export const assignUser: RequestHandler = async (req, res): Promise<any> => {
+  try {
+    const { placeId } = req.params;
+    const body = req.body as { userId: string };
+
+    if (!req.isSuperAdmin && !req.isAdmin) {
+      throw new RequestError({
+        status: HTTPStatusCode.Unauthorized,
+        message: "No tienes permiso para asignar un usuario",
+        code: "UNAUTHORIZED",
+      });
+    }
+
+    const place = await placesService.assignUser(placeId, body.userId);
+    return res.status(HTTPStatusCode.OK).json({ data: place });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      return res.status(error.HttpStatusCode).json(error);
+    }
+    return res.status(HTTPStatusCode.BadRequest).json(error);
+  }
+};
+
+export const assignService: RequestHandler = async (req, res): Promise<any> => {
+  try {
+    const { placeId } = req.params;
+    const body = req.body as { serviceId: string[] };
+
+    if (!req.isSuperAdmin && !req.isAdmin) {
+      throw new RequestError({
+        status: HTTPStatusCode.Unauthorized,
+        message: "No tienes permiso para asignar un servicio",
+        code: "UNAUTHORIZED",
+      });
+    }
+
+    const place = await placesService.assignService(placeId, body.serviceId);
+    return res.status(HTTPStatusCode.OK).json({ data: place });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      return res.status(error.HttpStatusCode).json(error);
+    }
+    return res.status(HTTPStatusCode.BadRequest).json(error);
+  }
+};

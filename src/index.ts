@@ -4,6 +4,7 @@ import { initWebSocketServer } from "./utils/websocket";
 import { PORT } from "@/config/environments";
 
 const expressServer = http.createServer(app);
+console.log("🧩 Inicializando WebSocket...");
 initWebSocketServer(expressServer);
 
 expressServer.listen(PORT, () => {

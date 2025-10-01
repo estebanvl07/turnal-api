@@ -54,8 +54,16 @@ class UserService {
           center: true,
           placeOfCare: {
             include: {
-              centerService: true,
               turns: true,
+              _count: {
+                select: {
+                  turns: {
+                    where: {
+                      statusId: 1,
+                    },
+                  },
+                },
+              },
             },
           },
           ips: true,
