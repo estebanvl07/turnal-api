@@ -3,6 +3,7 @@ import UserService from "@/services/user/user.service";
 import HTTPStatusCode from "@/config/httpStatusCode";
 import { RequestError } from "@/utils/errorHandler";
 import { Prisma } from "@prisma/client";
+import { UnauthorizedError } from "@/utils/unauthorizedError";
 
 export interface CreateMemberBody {
   name: string;
@@ -16,11 +17,7 @@ export const getUsers: RequestHandler = async (req, res) => {
   try {
     const ipsId = req.user?.ipsId;
     if (!req.isSuperAdmin) {
-      throw new RequestError({
-        status: HTTPStatusCode.Unauthorized,
-        message: "No tienes permiso para obtener todos usuarios",
-        code: "UNAUTHORIZED",
-      });
+      throw UnauthorizedError;
     }
     const users = await UserService.getUserIpsId(ipsId!);
     res.status(HTTPStatusCode.OK).json({ data: users });
@@ -36,11 +33,7 @@ export const getUsers: RequestHandler = async (req, res) => {
 export const createUser = async (req: Request, res: Response) => {
   try {
     if (!req.isSuperAdmin && !req.isAdmin) {
-      throw new RequestError({
-        status: HTTPStatusCode.Unauthorized,
-        message: "No tienes permiso para crear un usuario",
-        code: "UNAUTHORIZED",
-      });
+      throw UnauthorizedError;
     }
 
     const payload = {
@@ -78,11 +71,7 @@ export const getUsersByCenterId: RequestHandler = async (req, res) => {
 export const changeCenter: RequestHandler = async (req, res) => {
   try {
     if (!req.isSuperAdmin && !req.isAdmin) {
-      throw new RequestError({
-        status: HTTPStatusCode.Unauthorized,
-        message: "No tienes permiso para cambiar la sede de un usuario",
-        code: "UNAUTHORIZED",
-      });
+      throw UnauthorizedError;
     }
 
     const { userId, centerId } = req.params;
@@ -101,16 +90,56 @@ export const changeCenter: RequestHandler = async (req, res) => {
 export const changePlace: RequestHandler = async (req, res) => {
   try {
     if (!req.isSuperAdmin && !req.isAdmin) {
-      throw new RequestError({
-        status: HTTPStatusCode.Unauthorized,
-        message: "No tienes permiso para cambiar el lugar de un usuario",
-        code: "UNAUTHORIZED",
-      });
+      throw UnauthorizedError;
     }
 
     const { userId, placeOfCareId } = req.params;
 
     const user = await UserService.changePlace(userId, placeOfCareId);
+    res.status(HTTPStatusCode.OK).json({ data: user });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};
+
+export const changeState: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { state } = req.body;
+
+    if (req.user!.role === "USER") {
+      throw UnauthorizedError;
+    }
+
+    const user = await UserService.changeState(id, state);
+
+    res.status(HTTPStatusCode.OK).json({
+      data: user,
+      message: user.state === 1 ? "Usuario Activado" : "Usuario Desactivado",
+    });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};
+
+export const updateUser: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+
+    if (req.user!.role === "USER") {
+      throw UnauthorizedError;
+    }
+
+    const user = await UserService.UpdateUser(id, data);
     res.status(HTTPStatusCode.OK).json({ data: user });
   } catch (error) {
     if (error instanceof RequestError) {

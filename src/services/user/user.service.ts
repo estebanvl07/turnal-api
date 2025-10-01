@@ -150,6 +150,57 @@ class UserService {
       throw error;
     }
   }
+
+  public async UpdateUser(
+    userId: string,
+    data: Prisma.UserUncheckedUpdateInput
+  ) {
+    try {
+      const user = await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data,
+      });
+
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async changeState(id: string, state: number) {
+    try {
+      const user = await prisma.user.update({
+        where: {
+          id,
+        },
+        data: {
+          state,
+        },
+      });
+
+      if (user.state === 2) {
+        // si el usuario tenia algun lugar asignado lo quita
+        await prisma.placesOfCare.updateMany({
+          where: { userId: user.id },
+          data: { userId: null },
+        });
+
+        // si el usuario tenia turnos asignados en estado pendiente, lo retira
+        await prisma.turn.updateMany({
+          where: { statusId: 1, userId: user.id },
+          data: {
+            userId: null,
+          },
+        });
+      }
+
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export default new UserService();
