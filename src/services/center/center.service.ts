@@ -43,6 +43,49 @@ class CenterService {
     });
   }
 
+  public async updateCenter({
+    centerId,
+    body,
+  }: {
+    centerId: string;
+    body: CreateCenterInput;
+  }) {
+    const { places, ...centerData } = body;
+
+    try {
+      // Actualiza los datos del centro de atencion,
+      // los places que envien serán agregados como nuevos lugares de atencion
+      return prisma.$transaction(async (prisma) => {
+        const center = await prisma.careCenter.update({
+          where: {
+            id: centerId,
+          },
+          data: centerData,
+        });
+
+        const manyPlacesOfCare =
+          places === ""
+            ? []
+            : places.split(",").map((place) => ({
+                name: place.trim(),
+                centerId: center.id,
+              }));
+
+        await prisma.placesOfCare.createMany({
+          data: manyPlacesOfCare,
+        });
+
+        return await prisma.careCenter.findUnique({
+          where: {
+            id: center.id,
+          },
+        });
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
   public async getCenters({ ipsId }: { ipsId: string }) {
     try {
       const centers = await prisma.careCenter.findMany({

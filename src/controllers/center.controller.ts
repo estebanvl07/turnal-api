@@ -76,6 +76,27 @@ export const getCenters: RequestHandler = async (req, res) => {
 
     res.status(200).json({ data: centers });
   } catch (error) {
-    res.status(400).json(error);
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};
+
+export const updateCenter: RequestHandler = async (req, res) => {
+  try {
+    const updated = await centerService.updateCenter({
+      centerId: req.params.id,
+      body: req.body,
+    });
+
+    res.status(HTTPStatusCode.OK).json({ data: updated });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
   }
 };
