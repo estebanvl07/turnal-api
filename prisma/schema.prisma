@@ -13,8 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
 model Ips {
   id          String   @id @default(cuid())
   name        String
@@ -27,6 +25,8 @@ model Ips {
   turns       Turn[]
   centers     CareCenter[]
   services    Services[] // Relación con los servicios que ofrece la IPS
+
+  @@index([id, nit])
 }
 
 // servicios de la ips
@@ -40,10 +40,12 @@ model Services {
 
 
   ipsId     String
-  ips       Ips      @relation(fields: [ipsId], references: [id])
+  ips       Ips      @relation(fields: [ipsId], references: [id], onDelete: Cascade)
 
   careCenterServices CareCenterServices[]
   turns Turn[]
+
+  @@index([id, ipsId])
 }
 
 // Sedes de atención
@@ -55,12 +57,16 @@ model CareCenter {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now())
   
-  ips         Ips @relation(fields: [ipsId], references: [id])
+  ips         Ips @relation(fields: [ipsId], references: [id], onDelete: Cascade)
 
   users           User[]
   placesOfCare    PlacesOfCare[]
   centerServices  CareCenterServices[]
   turns           Turn[]
+  status          TurnStatus[]
+  
+
+  @@index([id, ipsId])
 }
 
 // servicios de cada sede
@@ -87,6 +93,8 @@ model PlaceOfCareServices {
 
   placeOfCare  PlacesOfCare @relation(fields: [placeOfCareId], references: [id], onDelete: Cascade)
   service      CareCenterServices   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([id, placeOfCareId])
 }
 
 // Lugares de atención (consultorio, sala de espera, etc)
@@ -99,10 +107,12 @@ model PlacesOfCare {
   userId          String?
 
   center          CareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
-  user            User? @relation(fields: [userId], references: [id])
+  user            User? @relation(fields: [userId], references: [id], onDelete: SetNull)
   
   services  PlaceOfCareServices[]
   turns     Turn[]
+
+  @@index([id, centerId])
 }
 
 enum UserRole {
@@ -129,6 +139,9 @@ model User {
   placeOfCare    PlacesOfCare[]  
   tokens    RefreshToken[]
   comments  TurnComments[]
+  histories TurnStatusHistory[]
+
+  @@index([id, ipsId])
 }
 
 model RefreshToken {
@@ -154,7 +167,7 @@ model Priority {
 
 model Turn {
   id              Int    @id @default(autoincrement())
-  code            String    
+  code            String
   statusId        Int
   serviceId       String
   careCenterId    String?
@@ -166,19 +179,22 @@ model Turn {
   ipsId           String
   date            DateTime  @default(now())
   createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  ips           Ips @relation(fields: [ipsId], references: [id])
-  service       Services @relation(fields: [serviceId], references: [id])
-  status        TurnStatus @relation(fields: [statusId], references: [id])
-  priority      Priority? @relation(fields: [priorityId], references: [id])
-  placesOfCare  PlacesOfCare @relation(fields: [placesOfCareId], references: [id])
-  careCenter    CareCenter? @relation(fields: [careCenterId], references: [id])
-  
-  comments  TurnComments[]
+  ips            Ips          @relation(fields: [ipsId], references: [id], onDelete: Cascade)
+  service        Services     @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  status         TurnStatus   @relation(fields: [statusId], references: [id])
+  priority       Priority?    @relation(fields: [priorityId], references: [id])
+  placesOfCare   PlacesOfCare @relation(fields: [placesOfCareId], references: [id])
+  careCenter     CareCenter?  @relation(fields: [careCenterId], references: [id], onDelete: Cascade)
+
+  comments       TurnComments[]
+  history        TurnStatusHistory[]
+
   @@index([ipsId, serviceId])
+  @@index([ipsId, createdAt])
+  @@unique([code, ipsId, date]) // opcional: evita códigos duplicados por IPS+fecha
 }
-
 model TurnComments {
   id        String @id @default(cuid())
   comment   String
@@ -186,11 +202,30 @@ model TurnComments {
   turnId    Int
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  ñupdatedAt DateTime @updatedAt
+
   user    User @relation(fields: [userId], references: [id], onDelete: Cascade)
   turn    Turn @relation(fields: [turnId], references: [id], onDelete: Cascade)
 }
-  
+
+model TurnStatusHistory {
+  id             String   @id @default(cuid())
+  turnId         Int
+  statusId       Int                // estado al que entró
+  enteredAt      DateTime @default(now())
+  exitedAt       DateTime?          // null hasta que se salga del estado
+  durationSeconds Int?              // opcional, se puede calcular pero útil para agregaciones
+  performedById  String?            // usuario que realizó la acción (SetNull on delete)
+  meta           Json?              // datos extra (notas, motivos, timestamps externos)
+
+  turn           Turn       @relation(fields: [turnId], references: [id], onDelete: Cascade)
+  status         TurnStatus @relation(fields: [statusId], references: [id])
+  performedBy    User?      @relation(fields: [performedById], references: [id], onDelete: SetNull)
+
+  @@index([turnId, enteredAt])
+  @@index([statusId, enteredAt])
+}
+
 model TurnStatus {
   id    Int @id @default(autoincrement())
   name  String @unique
@@ -199,6 +234,12 @@ model TurnStatus {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
 
+  careCenterId String
+  careCenter CareCenter @relation(fields: [careCenterId], references: [id], onDelete: Cascade)
+
+  ipsId String
+
+  history TurnStatusHistory[]
   turns Turn[]
 }
 

@@ -93,14 +93,14 @@ class AuthService {
         throw CredentialError;
       }
 
-      // const isPasswordValid = comparePassword({
-      //   password,
-      //   hash: user.password,
-      // });
+      const isPasswordValid = comparePassword({
+        password,
+        hash: user.password,
+      });
 
-      // if (!isPasswordValid) {
-      //   throw CredentialError;
-      // }
+      if (!isPasswordValid) {
+        throw CredentialError;
+      }
 
       const token = this.createToken({
         userId: user.id,

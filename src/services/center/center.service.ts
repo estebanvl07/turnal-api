@@ -27,7 +27,7 @@ class CenterService {
         places === ""
           ? []
           : places.split(",").map((place) => ({
-              name: place,
+              name: place.trim(),
               centerId: center.id,
             }));
 
@@ -35,7 +35,11 @@ class CenterService {
         data: manyPlacesOfCare,
       });
 
-      return center;
+      return await prisma.careCenter.findUnique({
+        where: {
+          id: center.id,
+        },
+      });
     });
   }
 
