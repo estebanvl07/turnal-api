@@ -140,6 +140,9 @@ class TurnService {
           userId: placeOfCare.userId,
           ipsId: rest.ipsId,
         },
+        include: {
+          placesOfCare: true,
+        },
       });
 
       const io = getIo();
