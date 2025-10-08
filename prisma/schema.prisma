@@ -59,13 +59,13 @@ model CareCenter {
   
   ips         Ips @relation(fields: [ipsId], references: [id], onDelete: Cascade)
 
-  users           User[]
-  placesOfCare    PlacesOfCare[]
-  centerServices  CareCenterServices[]
-  turns           Turn[]
-  status          TurnStatus[]
+  users               User[]
+  placesOfCare        PlacesOfCare[]
+  centerServices      CareCenterServices[]
+  turns               Turn[]
+  status              TurnStatus[]
+  placeOfCareServices PlaceOfCareServices[]
   
-
   @@index([id, ipsId])
 }
 
@@ -91,6 +91,9 @@ model PlaceOfCareServices {
   placeOfCareId String
   serviceId     String
 
+  careCenterId String?
+
+  careCenter   CareCenter? @relation(fields: [careCenterId], references: [id], onDelete: Cascade)
   placeOfCare  PlacesOfCare @relation(fields: [placeOfCareId], references: [id], onDelete: Cascade)
   service      CareCenterServices   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
@@ -105,7 +108,7 @@ model PlacesOfCare {
   updatedAt       DateTime @default(now())
   centerId        String
   userId          String?
-
+  
   center          CareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
   user            User? @relation(fields: [userId], references: [id], onDelete: SetNull)
   
@@ -202,7 +205,7 @@ model TurnComments {
   turnId    Int
 
   createdAt DateTime @default(now())
-  ñupdatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
   user    User @relation(fields: [userId], references: [id], onDelete: Cascade)
   turn    Turn @relation(fields: [turnId], references: [id], onDelete: Cascade)
@@ -229,7 +232,9 @@ model TurnStatusHistory {
 model TurnStatus {
   id    Int @id @default(autoincrement())
   name  String @unique
-  isActive Boolean @default(true)
+  isActive  Boolean @default(true)
+  initial   Boolean @default(false)
+  final     Boolean @default(false)
   
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())

@@ -9,6 +9,7 @@ import { router as serviceRoutes } from "./services";
 import { router as turnRoutes } from "./turn";
 import { router as placesRoutes } from "./places";
 import { router as careServicesRoutes } from "./careServices";
+import { router as statusRoutes } from "./status";
 
 const router = express();
 
@@ -22,5 +23,6 @@ router.use("/users", authJWT, userRoutes);
 router.use("/turns", authJWT, turnRoutes);
 router.use("/careServices", authJWT, careServicesRoutes);
 router.use("/places", authJWT, placesRoutes);
+router.use("/status", authJWT, statusRoutes);
 
 export default router;

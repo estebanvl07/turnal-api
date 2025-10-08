@@ -23,23 +23,31 @@ class TurnService {
 
       // Si no se proporciona el id del lugar de atencion se busca el primer lugar de atencion que atienda el servicio
       if (!placesOfCareId) {
-        const placesWithRequiredService = await prisma.placesOfCare.findMany({
+        const serviceOfCenter = await prisma.careCenterServices.findFirst({
           where: {
-            centerId: careCenterId!,
-            center: {
-              centerServices: { some: { serviceId: rest.serviceId } },
-            },
+            serviceId: rest.serviceId,
+            careCenterId: careCenterId!,
+          },
+          select: {
+            id: true,
           },
         });
+
+        const placesWithRequiredService =
+          await prisma.placeOfCareServices.findMany({
+            where: {
+              serviceId: serviceOfCenter?.id,
+            },
+          });
 
         const counts = placesWithRequiredService.map(async (place) => {
           const count = await prisma.turn.count({
             where: {
-              placesOfCareId: place.id,
+              placesOfCareId: place.placeOfCareId,
             },
           });
           return {
-            placeId: place.id,
+            placeId: place.placeOfCareId,
             count,
           };
         });
@@ -51,11 +59,11 @@ class TurnService {
           return prev.count < current.count ? prev : current;
         });
 
-        placeOfCare = await prisma.placesOfCare.findFirst({
+        placeOfCare = await prisma.placesOfCare.findUnique({
           where: { id: placeWithMinCount.placeId },
         });
       } else {
-        placeOfCare = await prisma.placesOfCare.findFirst({
+        placeOfCare = await prisma.placesOfCare.findUnique({
           where: { id: placesOfCareId },
         });
       }
@@ -104,6 +112,21 @@ class TurnService {
        * Genera el codigo unico para el turno del día
        */
       const code = generateTurnCode(prefix, count + 1);
+      const initialStatus = await prisma.turnStatus.findFirst({
+        where: {
+          careCenterId: careCenterId!,
+          isActive: true,
+          initial: true,
+        },
+      });
+
+      if (!initialStatus) {
+        throw new RequestError({
+          status: HTTPStatusCode.BadRequest,
+          message: "No se encontro el estado inicial",
+          code: "INITIAL_STATUS_NOT_FOUND",
+        });
+      }
 
       /**
        * Crea el turno con el codigo unico
