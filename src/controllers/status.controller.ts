@@ -58,3 +58,23 @@ export const getStatus: RequestHandler = async (req, res) => {
     res.status(HTTPStatusCode.InternalServerError).json(error);
   }
 };
+
+export const updateStatusOrder: RequestHandler = async (req, res) => {
+  try {
+    console.log("ORDERR", req.body);
+    const centerId = req.params.centerId || req.user?.centerId;
+
+    if (!centerId) {
+      throw Error("No se encontro un centro para asignarle este estado");
+    }
+
+    const status = await StatusService.updateStatusOrder(
+      req.body.status,
+      centerId
+    );
+    res.status(HTTPStatusCode.OK).json({ data: status });
+  } catch (error) {
+    console.log(error);
+    res.status(HTTPStatusCode.InternalServerError).json(error);
+  }
+};

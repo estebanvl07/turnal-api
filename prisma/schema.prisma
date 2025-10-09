@@ -233,9 +233,12 @@ model TurnStatus {
   id    Int @id @default(autoincrement())
   name  String @unique
   isActive  Boolean @default(true)
+  inWindow  Boolean @default(false)
   initial   Boolean @default(false)
   final     Boolean @default(false)
-  
+  order     Int @default(0)
+  color     String @default("#000000")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
 

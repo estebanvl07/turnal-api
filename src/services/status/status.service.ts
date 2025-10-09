@@ -4,17 +4,15 @@ import { Prisma } from "@prisma/client";
 class StatusService {
   public async createStatus(payload: Prisma.TurnStatusUncheckedCreateInput) {
     try {
-      const status = await prisma.turnStatus.create({
-        data: {
-          name: "fefe",
-          initial: false,
-          final: false,
-          isActive: true,
-          ipsId: "",
-          careCenterId: "",
-        },
+      const lastStatus = await prisma.turnStatus.findFirst({
+        where: { careCenterId: payload.careCenterId },
+        orderBy: { order: "desc" },
+        select: { order: true },
       });
-      return status;
+
+      const order = lastStatus ? lastStatus.order + 1 : 1;
+
+      return await prisma.turnStatus.create({ data: { ...payload, order } });
     } catch (error) {
       throw error;
     }
@@ -39,8 +37,28 @@ class StatusService {
         where: {
           careCenterId,
         },
+        orderBy: {
+          order: "asc",
+        },
       });
       return status;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async updateStatusOrder(status: number[], careCenterId: string) {
+    try {
+      for (let i = 0; i < status.length; i++) {
+        await prisma.turnStatus.update({
+          data: { order: i + 1 },
+          where: {
+            careCenterId,
+            id: status[i],
+          },
+        });
+      }
+      return await this.getStatus(careCenterId);
     } catch (error) {
       throw error;
     }

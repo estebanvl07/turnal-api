@@ -142,6 +142,7 @@ class TurnService {
         },
         include: {
           placesOfCare: true,
+          service: true
         },
       });
 
