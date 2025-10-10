@@ -142,9 +142,11 @@ class TurnService {
         },
         include: {
           placesOfCare: true,
-          service: true
+          service: true,
         },
       });
+
+      await this.createStoryTurn(turn.id, initialStatus.id);
 
       const io = getIo();
 
@@ -169,26 +171,45 @@ class TurnService {
   }
 
   public async getTurnById(id: number) {
-    const turn = await prisma.turn.findUnique({
-      where: { id },
-      include: {
-        placesOfCare: {
-          include: {
-            center: true,
-            user: true,
+    try {
+      const turn = await prisma.turn.findUnique({
+        where: { id },
+        include: {
+          placesOfCare: {
+            include: {
+              center: true,
+              user: true,
+            },
+          },
+          comments: {
+            include: {
+              user: true,
+            },
+          },
+          service: true,
+          priority: true,
+          status: true,
+          history: {
+            include: {
+              status: true,
+            },
           },
         },
-        comments: {
-          include: {
-            user: true,
-          },
-        },
-        service: true,
-        priority: true,
-        status: true,
-      },
-    });
-    return turn;
+      });
+
+      if (!turn) {
+        throw new RequestError({
+          status: HTTPStatusCode.NotFound,
+          message: "Turno no encontrado",
+          code: "TURN_NOT_FOUND",
+        });
+      }
+
+      return turn;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   public async getTurns(params: { ipsId: string; centerId?: string }) {
@@ -274,37 +295,95 @@ class TurnService {
       },
     });
 
-    const io = getIo();
-
-    // Emitimos el evento a todos los usuarios que están en el canal del centro correspondiente
-    io.to(getCenterChannel(turn.placesOfCare.center.id)).emit("turn:updated", {
-      turnId: turn.id,
-      title: `Turno actualizado`,
-      message: `El turno ${turn.code} ha sido actualizado a "${turn.status.name}"`,
-      turnData: turn,
+    const lastStory = await prisma.turnStatusHistory.findFirst({
+      where: {
+        turnId: id,
+      },
+      orderBy: {
+        enteredAt: "desc",
+      },
     });
 
-    if (state === 2) {
-      io.to(getCenterChannel(turn.placesOfCare.center.id)).emit("turn:call", {
-        turnId: turn.id,
-        title: `Turno llamado`,
-        message: `El turno ${turn.code} ha sido llamado`,
-        turnData: turn,
+    if (lastStory) {
+      await prisma.turnStatusHistory.update({
+        where: {
+          id: lastStory.id,
+        },
+        data: {
+          exitedAt: new Date(),
+          durationSeconds: Math.floor(
+            (new Date().getTime() - lastStory.enteredAt.getTime()) / 1000
+          ),
+        },
       });
+
+      this.createStoryTurn(id, state);
     }
 
-    if (state === 3) {
-      io.to(getCenterChannel(turn.placesOfCare.center.id)).emit(
-        "turn:finished",
-        {
-          turnId: turn.id,
-          title: `Turno finalizado`,
-          message: `El turno ${turn.code} ha sido finalizado`,
-          turnData: turn,
-        }
-      );
-    }
+    // const io = getIo();
+
+    // Emitimos el evento a todos los usuarios que están en el canal del centro correspondiente
+    // io.to(getCenterChannel(turn.placesOfCare.center.id)).emit("turn:updated", {
+    //   turnId: turn.id,
+    //   title: `Turno actualizado`,
+    //   message: `El turno ${turn.code} ha sido actualizado a "${turn.status.name}"`,
+    //   turnData: turn,
+    // });
+
+    // TODO: planning status turn alerts
+
+    // if (state === 2) {
+    //   io.to(getCenterChannel(turn.placesOfCare.center.id)).emit("turn:call", {
+    //     turnId: turn.id,
+    //     title: `Turno llamado`,
+    //     message: `El turno ${turn.code} ha sido llamado`,
+    //     turnData: turn,
+    //   });
+    // }
+
+    // if (state === 3) {
+    //   io.to(getCenterChannel(turn.placesOfCare.center.id)).emit(
+    //     "turn:finished",
+    //     {
+    //       turnId: turn.id,
+    //       title: `Turno finalizado`,
+    //       message: `El turno ${turn.code} ha sido finalizado`,
+    //       turnData: turn,
+    //     }
+    //   );
+    // }
     return turn;
+  }
+
+  public async getHistoryTurn(turnId: number) {
+    try {
+      const history = await prisma.turnStatusHistory.findMany({
+        where: {
+          turnId,
+        },
+      });
+
+      return history;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async createStoryTurn(turnId: number, state: number) {
+    try {
+      const story = await prisma.turnStatusHistory.create({
+        data: {
+          turnId,
+          statusId: state,
+        },
+      });
+
+      console.log(story);
+
+      return story;
+    } catch (error) {
+      throw error;
+    }
   }
 }
 

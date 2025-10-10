@@ -106,6 +106,7 @@ export const createComment: RequestHandler = async (req, res) => {
 export const getTurnById: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
+
     const turn = await turnService.getTurnById(Number(id));
     res.status(HTTPStatusCode.OK).json({ data: turn });
   } catch (error) {
