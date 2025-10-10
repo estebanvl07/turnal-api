@@ -1,5 +1,6 @@
 import { prisma } from "@/utils/db";
 import { CreateServiceParams } from "./type";
+import { Prisma } from "@prisma/client";
 
 class ServicesService {
   constructor() {}
@@ -13,6 +14,7 @@ class ServicesService {
           name: data.name,
           icon: data.icon ?? "Heart",
           ipsId: data.ipsId,
+          prefix: data.prefix,
           careCenterServices: {
             createMany: {
               data: centers.map((center) => ({

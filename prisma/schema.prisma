@@ -38,6 +38,7 @@ model Services {
   updatedAt DateTime @default(now())
   state     Int @default(1) // 1: activo, 2: inactivo
 
+  prefix    String?
 
   ipsId     String
   ips       Ips      @relation(fields: [ipsId], references: [id], onDelete: Cascade)
