@@ -35,3 +35,22 @@ export const getCareServicesById: RequestHandler = (req, res) => {
     }
   }
 };
+
+export const addServiceToCareCenter: RequestHandler = (req, res) => {
+  try {
+    const centerId = req.params.id;
+    const servicesId = req.body.servicesId;
+
+    const careService = careServiceService.addServiceToCareCenter({
+      centerId,
+      servicesId,
+    });
+    res.status(HTTPStatusCode.OK).json({ data: careService });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};
