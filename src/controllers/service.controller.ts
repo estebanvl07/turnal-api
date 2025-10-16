@@ -32,6 +32,7 @@ export const getServices: RequestHandler = async (req, res) => {
     const services = req.isSuperAdmin
       ? await ServicesService.getServices({ ipsId })
       : await ServicesService.getCenterService({
+          ipsId,
           centerId: req.user?.centerId!,
         });
     res.status(200).json({ data: services });

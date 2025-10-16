@@ -3,6 +3,7 @@ import { hashPassword } from "@/utils/bcrypt";
 import { prisma } from "@/utils/db";
 import { RepositoryError } from "@/utils/errorHandler";
 import { Prisma } from "@prisma/client";
+import TurnService from "../turn/turn.service";
 
 interface UserResponse {
   id: string;
@@ -17,6 +18,7 @@ interface UserResponse {
 }
 
 class UserService {
+
   public userMapper(user: UserIncludes): UserResponse {
     const {
       id,
@@ -60,6 +62,7 @@ class UserService {
                   turns: {
                     where: {
                       statusId: 1,
+                      NOT: await TurnService.validateTurnNoFinished(),
                     },
                   },
                 },

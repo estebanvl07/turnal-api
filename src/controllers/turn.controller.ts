@@ -103,6 +103,27 @@ export const createComment: RequestHandler = async (req, res) => {
   }
 };
 
+export const updateTurnById: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data: Prisma.TurnUncheckedUpdateInput = req.body;
+
+    const payload = {
+      id: Number(id),
+      ...data,
+    };
+
+    const turn = await turnService.updateTurnById(Number(id), payload);
+    res.status(HTTPStatusCode.OK).json({ data: turn });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};
+
 export const getTurnById: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
@@ -123,12 +144,26 @@ export const updateStateTurn: RequestHandler = async (req, res) => {
     const { id } = req.params;
     const { state } = req.body;
 
-    console.log(id, state);
-
     const turn = await turnService.updateStateTurn({
       id: Number(id),
       state: Number(state),
     });
+    res.status(HTTPStatusCode.OK).json({ data: turn });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};
+
+export const cleanTurns: RequestHandler = async (req, res) => {
+  try {
+    const { centerId } = req.body;
+    const userId = req.user?.id!;
+
+    const turn = await turnService.cleanTurns({ centerId, userId });
     res.status(HTTPStatusCode.OK).json({ data: turn });
   } catch (error) {
     if (error instanceof RequestError) {

@@ -40,12 +40,16 @@ export const authJWT: RequestHandler = async (req, res, next) => {
         token,
         JWT_SECRET
       ) as DataStoredInToken;
+
+      console.log(verificationResponse);
+
       const userId = verificationResponse.userId;
       const foundUser = await prisma.user.findUnique({
         where: {
           id: userId,
         },
       });
+
       if (foundUser) {
         req.user = foundUser;
         req.isAuthenticated = true;
@@ -54,7 +58,7 @@ export const authJWT: RequestHandler = async (req, res, next) => {
         req.ipsId = foundUser.ipsId;
         next();
       } else {
-        next(
+        res.status(HTTPStatusCode.Unauthorized).json(
           new RequestError({
             status: HTTPStatusCode.Unauthorized,
             message: "Error en el token de autorización",
@@ -63,7 +67,7 @@ export const authJWT: RequestHandler = async (req, res, next) => {
         );
       }
     } else {
-      next(
+      res.status(HTTPStatusCode.NotFound).json(
         new RequestError({
           status: HTTPStatusCode.NotFound,
           message: "Token de autorización faltante",
@@ -72,7 +76,7 @@ export const authJWT: RequestHandler = async (req, res, next) => {
       );
     }
   } catch (error) {
-    next(
+    res.status(HTTPStatusCode.Unauthorized).json(
       new RequestError({
         status: HTTPStatusCode.Unauthorized,
         message: "ERROR_TOKEN",

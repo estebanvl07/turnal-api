@@ -6,7 +6,7 @@ let io: Server;
 export const initWebSocketServer = (expressServer: http.Server) => {
   io = new SocketIoServer(expressServer, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: ["http://localhost:5173"],
     },
   });
 

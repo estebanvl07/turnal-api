@@ -82,26 +82,66 @@ class ServicesService {
     ipsId: string;
     centerId?: string;
   }) {
-    const [turnCount, turnSuccess, turnPending, turnCancel] = await Promise.all(
-      [
+    const [turnCount, turnSuccess, turnPending, unfinishedTurns] =
+      await Promise.all([
         prisma.turn.count({ where: { ipsId, careCenterId: centerId } }),
         prisma.turn.count({
-          where: { ipsId, careCenterId: centerId, statusId: 1 },
+          where: {
+            ipsId,
+            careCenterId: centerId,
+            status: {
+              final: true,
+            },
+          },
         }),
         prisma.turn.count({
-          where: { ipsId, careCenterId: centerId, statusId: 2 },
+          where: {
+            ipsId,
+            careCenterId: centerId,
+            status: {
+              final: false,
+            },
+            unfinishedTurn: {
+              NOT: {
+                id: {
+                  not: undefined,
+                },
+              },
+            },
+            finishedTurn: {
+              NOT: {
+                id: {
+                  not: undefined,
+                },
+              },
+            },
+          },
         }),
         prisma.turn.count({
-          where: { ipsId, careCenterId: centerId, statusId: 3 },
+          where: {
+            ipsId,
+            careCenterId: centerId,
+            status: {
+              final: false,
+            },
+            unfinishedTurn: {
+              NOT: [
+                {
+                  id: {
+                    not: undefined,
+                  },
+                },
+              ],
+            },
+          },
         }),
-      ]
-    );
+      ]);
 
     return {
       turnCount,
       turnSuccess,
       turnPending,
-      turnCancel,
+      unfinishedTurns,
     };
   }
   public async getServices({ ipsId }: { ipsId: string }) {
@@ -140,7 +180,13 @@ class ServicesService {
       throw error;
     }
   }
-  public async getCenterService({ centerId }: { centerId: string }) {
+  public async getCenterService({
+    ipsId,
+    centerId,
+  }: {
+    ipsId: string;
+    centerId: string;
+  }) {
     try {
       const services = await prisma.services.findMany({
         where: {
@@ -160,7 +206,10 @@ class ServicesService {
         },
       });
 
-      const statistics = await this.getStatistics({ ipsId: centerId });
+      const statistics = await this.getStatistics({
+        ipsId,
+        centerId,
+      });
 
       return {
         services,

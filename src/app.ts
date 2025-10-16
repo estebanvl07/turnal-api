@@ -20,6 +20,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ALL ROUTES
+app.get("/", (req, res) => {
+  res.send("Turnal API, v1.0.0");
+});
+
 app.use("/api", routes);
 
 export { app };

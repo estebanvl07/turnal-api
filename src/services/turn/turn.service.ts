@@ -2,10 +2,37 @@ import HTTPStatusCode from "@/config/httpStatusCode";
 import { generateTurnCode } from "@/utils/buildCode";
 import { prisma } from "@/utils/db";
 import { RequestError } from "@/utils/errorHandler";
-import { Prisma } from "@prisma/client";
+import { Turn, Prisma } from "@prisma/client";
 import { getCenterChannel, getIo } from "@/utils/websocket";
 
 class TurnService {
+  public async validateTurnNoFinished() {
+    return [
+      {
+        id: {
+          in: await prisma.finishedTurn
+            .findMany({
+              select: {
+                turnId: true,
+              },
+            })
+            .then((turns) => turns.map((turn) => turn.turnId)),
+        },
+      },
+      {
+        id: {
+          in: await prisma.unfinishedTurn
+            .findMany({
+              select: {
+                turnId: true,
+              },
+            })
+            .then((turns) => turns.map((turn) => turn.turnId)),
+        },
+      },
+    ];
+  }
+
   /**
    * Crea un turno con el codigo unico para el centro de atencion
    * @param data
@@ -143,6 +170,7 @@ class TurnService {
         include: {
           placesOfCare: true,
           service: true,
+          status: true,
         },
       });
 
@@ -165,6 +193,17 @@ class TurnService {
     }
   }
 
+  public async updateTurnById(
+    id: number,
+    data: Prisma.TurnUncheckedUpdateInput
+  ) {
+    const turn = await prisma.turn.update({
+      where: { id },
+      data,
+    });
+    return turn;
+  }
+
   public async createComment(data: Prisma.TurnCommentsUncheckedCreateInput) {
     const comment = await prisma.turnComments.create({ data });
     return comment;
@@ -175,6 +214,16 @@ class TurnService {
       const turn = await prisma.turn.findUnique({
         where: { id },
         include: {
+          unfinishedTurn: {
+            include: {
+              user: true,
+            },
+          },
+          finishedTurn: {
+            include: {
+              user: true,
+            },
+          },
           placesOfCare: {
             include: {
               center: true,
@@ -216,7 +265,15 @@ class TurnService {
     const { ipsId, centerId } = params;
 
     const centersTurn = await prisma.careCenter.findMany({
-      where: { ipsId, id: centerId },
+      where: {
+        ipsId,
+        id: centerId,
+        turns: {
+          some: {
+            NOT: await this.validateTurnNoFinished(),
+          },
+        },
+      },
       include: {
         placesOfCare: {
           include: {
@@ -224,6 +281,9 @@ class TurnService {
           },
         },
         turns: {
+          where: {
+            NOT: await this.validateTurnNoFinished(),
+          },
           include: {
             placesOfCare: {
               include: {
@@ -252,6 +312,7 @@ class TurnService {
         placesOfCare: {
           userId,
         },
+        NOT: await this.validateTurnNoFinished(),
       },
       include: {
         placesOfCare: {
@@ -320,38 +381,19 @@ class TurnService {
       this.createStoryTurn(id, state);
     }
 
-    // const io = getIo();
+    const io = getIo();
 
     // Emitimos el evento a todos los usuarios que están en el canal del centro correspondiente
-    // io.to(getCenterChannel(turn.placesOfCare.center.id)).emit("turn:updated", {
-    //   turnId: turn.id,
-    //   title: `Turno actualizado`,
-    //   message: `El turno ${turn.code} ha sido actualizado a "${turn.status.name}"`,
-    //   turnData: turn,
-    // });
+    io.to(getCenterChannel(turn.placesOfCare.center.id)).emit(
+      "turn:statusUpdate",
+      {
+        turnId: turn.id,
+        title: `Turno actualizado`,
+        message: `El turno ${turn.code} ha sido actualizado a "${turn.status.name}"`,
+        turnData: turn,
+      }
+    );
 
-    // TODO: planning status turn alerts
-
-    // if (state === 2) {
-    //   io.to(getCenterChannel(turn.placesOfCare.center.id)).emit("turn:call", {
-    //     turnId: turn.id,
-    //     title: `Turno llamado`,
-    //     message: `El turno ${turn.code} ha sido llamado`,
-    //     turnData: turn,
-    //   });
-    // }
-
-    // if (state === 3) {
-    //   io.to(getCenterChannel(turn.placesOfCare.center.id)).emit(
-    //     "turn:finished",
-    //     {
-    //       turnId: turn.id,
-    //       title: `Turno finalizado`,
-    //       message: `El turno ${turn.code} ha sido finalizado`,
-    //       turnData: turn,
-    //     }
-    //   );
-    // }
     return turn;
   }
 
@@ -381,6 +423,75 @@ class TurnService {
       console.log(story);
 
       return story;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async cleanTurns(data: { centerId: string; userId: string }) {
+    try {
+      const { centerId, userId } = data;
+      const unfinishedTurns = await prisma.turn.findMany({
+        where: {
+          careCenterId: centerId,
+          status: {
+            final: false,
+          },
+          NOT: {
+            id: {
+              in: await prisma.unfinishedTurn
+                .findMany({
+                  select: {
+                    turnId: true,
+                  },
+                })
+                .then((turns) => turns.map((turn) => turn.turnId)),
+            },
+          },
+        },
+      });
+
+      const finishedTurns = await prisma.turn.findMany({
+        where: {
+          careCenterId: centerId,
+          status: {
+            final: true,
+          },
+          NOT: {
+            id: {
+              in: await prisma.finishedTurn
+                .findMany({
+                  select: {
+                    turnId: true,
+                  },
+                })
+                .then((turns) => turns.map((turn) => turn.turnId)),
+            },
+          },
+        },
+      });
+
+      const unfinishedTurnsIds = unfinishedTurns.map((turn) => turn.id);
+      const finishedTurnsIds = finishedTurns.map((turn) => turn.id);
+
+      await prisma.unfinishedTurn.createMany({
+        data: unfinishedTurnsIds.map((turnId) => ({
+          turnId,
+          userId,
+        })),
+      });
+
+      await prisma.finishedTurn.createMany({
+        data: finishedTurnsIds.map((turnId) => ({
+          turnId,
+          userId,
+        })),
+      });
+
+      return {
+        unfinishedTurns,
+        finishedTurns,
+      };
     } catch (error) {
       throw error;
     }
