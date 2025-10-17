@@ -197,12 +197,16 @@ class TurnService {
     id: number,
     data: Prisma.TurnUncheckedUpdateInput
   ) {
+    const oldTurn = await prisma.turn.findUnique({
+      where: { id },
+    });
+
     const turn = await prisma.turn.update({
       where: { id },
       data,
     });
 
-    if (data.statusId) {
+    if (data.statusId !== oldTurn?.statusId) {
       await this.createStoryTurn(id, data.statusId as number);
     }
 
