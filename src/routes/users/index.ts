@@ -2,6 +2,7 @@ import express from "express";
 import {
   getUsers,
   createUser,
+  getUserById,
   getUsersByCenterId,
   changeCenter,
   changePlace,
@@ -12,7 +13,8 @@ import {
 const router = express();
 
 router.get("/", getUsers);
-router.get("/:centerId", getUsersByCenterId);
+router.get("/:id", getUserById);
+router.get("/center/:centerId", getUsersByCenterId);
 router.post("/", createUser);
 
 router.put("/:id", updateUser);

@@ -144,11 +144,22 @@ export const getTurnById: RequestHandler = async (req, res) => {
 export const updateStateTurn: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
-    const { state } = req.body;
+    const {
+      state,
+      assignMe = false,
+      placesOfCareId,
+    } = req.body as {
+      state: number;
+      assignMe?: boolean;
+      placesOfCareId?: string;
+    };
 
     const turn = await turnService.updateStateTurn({
       id: Number(id),
       state: Number(state),
+      assignMe,
+      placesOfCareId,
+      userId: req.user?.id!,
     });
     res.status(HTTPStatusCode.OK).json({ data: turn });
   } catch (error) {

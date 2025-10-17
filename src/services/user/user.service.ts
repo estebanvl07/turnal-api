@@ -99,6 +99,39 @@ class UserService {
     }
   }
 
+  public async getUserById(id: string) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: {
+          id,
+        },
+        include: {
+          center: true,
+          placeOfCare: true,
+          ips: true,
+        },
+      });
+
+      if (!user) {
+        throw new RepositoryError({
+          message: "Usuario no encontrado",
+          code: "USER_NOT_FOUND",
+        });
+      }
+
+      const { center, placeOfCare, ips, ...userData } = user
+
+      return {
+        ...this.userMapper(userData),
+        center,
+        placeOfCare,
+        ips,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
   public async createUser(data: Prisma.UserUncheckedCreateInput) {
     try {
       const { password, ...rest } = data;

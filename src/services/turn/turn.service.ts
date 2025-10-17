@@ -343,27 +343,57 @@ class TurnService {
     return turns;
   }
 
-  public async updateStateTurn(data: { id: number; state: number }) {
-    const { id, state } = data;
+  public async updateStateTurn(data: {
+    id: number;
+    state: number;
+    assignMe?: boolean;
+    userId?: string;
+    placesOfCareId?: string;
+  }) {
+    const { id, state, assignMe, userId, placesOfCareId } = data;
 
-    const turn = await prisma.turn.update({
-      where: { id },
-      data: {
-        statusId: Number(state),
-      },
-      include: {
-        placesOfCare: {
-          include: {
-            center: true,
-            user: true,
-          },
+    let turn;
+
+    if (assignMe) {
+      turn = await prisma.turn.update({
+        where: { id },
+        data: {
+          statusId: state,
+          userId,
+          placesOfCareId,
         },
+        include: {
+          placesOfCare: {
+            include: {
+              center: true,
+              user: true,
+            },
+          },
+          service: true,
+          priority: true,
+          status: true,
+        },
+      });
+    } else {
+      turn = await prisma.turn.update({
+        where: { id },
+        data: {
+          statusId: Number(state),
+        },
+        include: {
+          placesOfCare: {
+            include: {
+              center: true,
+              user: true,
+            },
+          },
 
-        service: true,
-        priority: true,
-        status: true,
-      },
-    });
+          service: true,
+          priority: true,
+          status: true,
+        },
+      });
+    }
 
     const lastStory = await prisma.turnStatusHistory.findFirst({
       where: {
@@ -374,7 +404,7 @@ class TurnService {
       },
     });
 
-    if (lastStory) {
+    if (lastStory && state !== lastStory.statusId) {
       await prisma.turnStatusHistory.update({
         where: {
           id: lastStory.id,

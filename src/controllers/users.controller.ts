@@ -30,6 +30,20 @@ export const getUsers: RequestHandler = async (req, res) => {
   }
 };
 
+export const getUserById: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await UserService.getUserById(id);
+    res.status(HTTPStatusCode.OK).json({ data: user });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};
+
 export const createUser = async (req: Request, res: Response) => {
   try {
     if (!req.isSuperAdmin && !req.isAdmin) {
