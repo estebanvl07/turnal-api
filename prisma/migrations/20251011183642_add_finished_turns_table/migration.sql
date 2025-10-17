@@ -1,0 +1,8 @@
+-- CreateTable
+CREATE TABLE "finishedTurn" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "turnId" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "finishedTurn_turnId_fkey" FOREIGN KEY ("turnId") REFERENCES "Turn" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);

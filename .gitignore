@@ -1,2 +1,6 @@
 node_modules/
-env
+.env
+shared-types/dist
+shared-types/node_modules
+prisma/dev.db
+prisma/prisma/dev.db

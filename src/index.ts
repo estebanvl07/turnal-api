@@ -1,12 +1,12 @@
-import express, { Request, Response } from "express"
+import http from "http";
+import { app } from "./app";
+import { initWebSocketServer } from "./utils/websocket";
+import { PORT } from "@/config/environments";
 
-const app = express()
-const port = process.env.PORT || 8000
+const expressServer = http.createServer(app);
+console.log("🧩 Inicializando WebSocket...");
+initWebSocketServer(expressServer);
 
-app.get('/', (req: Request, res: Response) => {
-    res.send('Hello, TypeScript with Express!');
+expressServer.listen(PORT, () => {
+  console.log(`🚀 Server running on port, ${PORT}`);
 });
-
-app.listen(port, () => {
-    console.log(`server reuning on port, ${port} 🚀`)
-})
