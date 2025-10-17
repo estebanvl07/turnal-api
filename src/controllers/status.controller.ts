@@ -61,7 +61,6 @@ export const getStatus: RequestHandler = async (req, res) => {
 
 export const updateStatusOrder: RequestHandler = async (req, res) => {
   try {
-    console.log("ORDERR", req.body);
     const centerId = req.params.centerId || req.user?.centerId;
 
     if (!centerId) {
@@ -74,7 +73,6 @@ export const updateStatusOrder: RequestHandler = async (req, res) => {
     );
     res.status(HTTPStatusCode.OK).json({ data: status });
   } catch (error) {
-    console.log(error);
     res.status(HTTPStatusCode.InternalServerError).json(error);
   }
 };

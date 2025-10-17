@@ -41,8 +41,6 @@ export const authJWT: RequestHandler = async (req, res, next) => {
         JWT_SECRET
       ) as DataStoredInToken;
 
-      console.log(verificationResponse);
-
       const userId = verificationResponse.userId;
       const foundUser = await prisma.user.findUnique({
         where: {

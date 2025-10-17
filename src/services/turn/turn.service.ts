@@ -201,6 +201,11 @@ class TurnService {
       where: { id },
       data,
     });
+
+    if (data.statusId) {
+      await this.createStoryTurn(id, data.statusId as number);
+    }
+
     return turn;
   }
 
@@ -419,8 +424,6 @@ class TurnService {
           statusId: state,
         },
       });
-
-      console.log(story);
 
       return story;
     } catch (error) {

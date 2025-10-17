@@ -15,10 +15,12 @@ export const createTurn: RequestHandler = async (req, res) => {
       date: Date;
       priorityId: number;
       placesOfCareId: string;
-      centerId: string;
+      careCenterId: string;
     };
 
-    const careCenterId = req.isSuperAdmin ? body.centerId : req.user?.centerId!;
+    const careCenterId = req.isSuperAdmin
+      ? body.careCenterId
+      : req.user?.centerId!;
     const placeOfCareId = req.isSuperAdmin
       ? body.placesOfCareId
       : req.user?.placesOfCare?.id!;
