@@ -169,6 +169,50 @@ class CenterService {
       throw error;
     }
   }
+
+  public async getTurnsByCenter({
+    id,
+    start_date,
+    end_date,
+    statusId,
+    serviceId,
+  }: {
+    id: string;
+    start_date: string;
+    end_date: string;
+    statusId?: number;
+    serviceId?: string;
+  }) {
+    try {
+      const center = await prisma.careCenter.findFirst({
+        where: {
+          id,
+          turns: {
+            some: {
+              date: {
+                gte: start_date,
+                lte: end_date,
+              },
+              statusId,
+              serviceId,
+            },
+          },
+        },
+        include: {
+          turns: {
+            include: {
+              service: true,
+              status: true,
+              placesOfCare: true,
+            },
+          },
+        },
+      });
+      return center;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export default new CenterService();

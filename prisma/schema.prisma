@@ -235,8 +235,8 @@ model TurnStatusHistory {
 }
 
 model TurnStatus {
-  id    Int @id @default(autoincrement())
-  name  String @unique
+  id        Int @id @default(autoincrement())
+  name      String
   isActive  Boolean @default(true)
   inWindow  Boolean @default(false)
   initial   Boolean @default(false)

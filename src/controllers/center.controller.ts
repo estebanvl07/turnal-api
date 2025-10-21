@@ -70,6 +70,26 @@ export const getCentersById: RequestHandler = async (req, res) => {
   }
 };
 
+export const getTurnsByCenter: RequestHandler = async (req, res) => {
+  try {
+    const { id, start_date, end_date, statusId, serviceId } = req.params;
+    const center = await centerService.getTurnsByCenter({
+      id,
+      start_date,
+      end_date,
+      statusId: Number(statusId),
+      serviceId,
+    });
+    res.status(HTTPStatusCode.OK).json({ data: center });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};
+
 export const getCenters: RequestHandler = async (req, res) => {
   try {
     const centers = await centerService.getCenters({ ipsId: req.ipsId! });
