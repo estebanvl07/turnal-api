@@ -72,13 +72,16 @@ export const getCentersById: RequestHandler = async (req, res) => {
 
 export const getTurnsByCenter: RequestHandler = async (req, res) => {
   try {
-    const { id, start_date, end_date, statusId, serviceId } = req.params;
+    const { id } = req.params;
+    const { start_date, end_date, statusId, serviceId, identifier } = req.query;
+
     const center = await centerService.getTurnsByCenter({
       id,
-      start_date,
-      end_date,
-      statusId: Number(statusId),
-      serviceId,
+      start_date: start_date as string,
+      end_date: end_date as string,
+      statusId: Number(statusId) || undefined,
+      serviceId: (serviceId as string) || undefined,
+      identification: (identifier as string) || undefined,
     });
     res.status(HTTPStatusCode.OK).json({ data: center });
   } catch (error) {

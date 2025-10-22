@@ -176,40 +176,40 @@ class CenterService {
     end_date,
     statusId,
     serviceId,
+    identification,
   }: {
     id: string;
     start_date: string;
     end_date: string;
     statusId?: number;
     serviceId?: string;
+    identification?: string;
   }) {
+    console.log(id, start_date, end_date, statusId, serviceId);
+
     try {
-      const center = await prisma.careCenter.findFirst({
+      const turns = await prisma.turn.findMany({
         where: {
-          id,
-          turns: {
-            some: {
-              date: {
-                gte: start_date,
-                lte: end_date,
-              },
-              statusId,
-              serviceId,
-            },
+          careCenterId: id,
+          date: {
+            gte: start_date,
+            lte: end_date,
           },
+          statusId,
+          serviceId,
+          identification,
         },
         include: {
-          turns: {
-            include: {
-              service: true,
-              status: true,
-              placesOfCare: true,
-            },
-          },
+          service: true,
+          status: true,
+          placesOfCare: true,
+          careCenter: true,
         },
       });
-      return center;
+
+      return turns;
     } catch (error) {
+      console.log(error);
       throw error;
     }
   }
