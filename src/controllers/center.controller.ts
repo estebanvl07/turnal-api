@@ -72,6 +72,17 @@ export const getCentersById: RequestHandler = async (req, res) => {
 
 export const getTurnsByCenter: RequestHandler = async (req, res) => {
   try {
+
+    const hasPermission = req.isAdmin || req.isSuperAdmin;
+
+    if (!hasPermission) {
+      throw new RequestError({
+        status: HTTPStatusCode.Unauthorized,
+        message: "No tienes permiso para obtener los turnos",
+        code: "UNAUTHORIZED",
+      });
+    }
+
     const { id } = req.params;
     const { start_date, end_date, statusId, serviceId, identifier } = req.query;
 
