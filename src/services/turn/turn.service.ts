@@ -436,6 +436,68 @@ class TurnService {
     return turn;
   }
 
+  public async updateNextTurn({ id }: { id: number }) {
+    const turnFound = await prisma.turn.findUnique({
+      where: { id },
+      include: {
+        status: true,
+      },
+    });
+
+    if (!turnFound) {
+      throw new RequestError({
+        status: HTTPStatusCode.NotFound,
+        message: "Turno no encontrado",
+        code: "TURN_NOT_FOUND",
+      });
+    }
+
+    const status = turnFound?.status;
+
+    if (status?.final) {
+      return;
+    }
+
+    const nextStatus = await prisma.turnStatus.findFirst({
+      where: {
+        order: status?.order + 1,
+      },
+    });
+
+    const turnUpdated = await prisma.turn.update({
+      where: { id },
+      data: {
+        statusId: nextStatus?.id,
+      },
+      include: {
+        placesOfCare: {
+          include: {
+            center: true,
+            user: true,
+          },
+        },
+        service: true,
+        priority: true,
+        status: true,
+      },
+    });
+
+    const io = getIo();
+
+    // Emitimos el evento a todos los usuarios que están en el canal del centro correspondiente
+    io.to(getCenterChannel(turnUpdated.placesOfCare.center.id)).emit(
+      "turn:statusUpdate",
+      {
+        turnId: turnUpdated.id,
+        title: `Turno actualizado`,
+        message: `El turno ${turnUpdated.code} ha sido actualizado a "${turnUpdated.status.name}"`,
+        turnData: turnUpdated,
+      }
+    );
+
+    return turnUpdated;
+  }
+
   public async getHistoryTurn(turnId: number) {
     try {
       const history = await prisma.turnStatusHistory.findMany({

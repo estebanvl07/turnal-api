@@ -7,6 +7,7 @@ import {
   getTurnsByUser,
   cleanTurns,
   updateTurnById,
+  updateNextTurn,
 } from "@/controllers/turn.controller";
 import express from "express";
 
@@ -23,6 +24,8 @@ router.post("/", createTurn);
 router.post("/:id/comment", createComment);
 
 router.patch("/:id/state", updateStateTurn);
+router.patch("/:id/next", updateNextTurn);
+
 router.put("/clean/board", cleanTurns);
 
 export { router };
