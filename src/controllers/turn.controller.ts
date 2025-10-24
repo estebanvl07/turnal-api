@@ -171,6 +171,20 @@ export const updateStateTurn: RequestHandler = async (req, res) => {
   }
 };
 
+export const updateNextTurn: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const turn = await turnService.updateNextTurn({ id: Number(id) });
+    res.status(HTTPStatusCode.OK).json({ data: turn });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};
+
 export const cleanTurns: RequestHandler = async (req, res) => {
   try {
     const { centerId } = req.body;
