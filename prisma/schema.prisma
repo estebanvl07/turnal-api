@@ -110,6 +110,8 @@ model PlacesOfCare {
   updatedAt       DateTime @default(now())
   centerId        String
   userId          String?
+
+  active          Boolean @default(true)
   
   center          CareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
   user            User? @relation(fields: [userId], references: [id], onDelete: SetNull)

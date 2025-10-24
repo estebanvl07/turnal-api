@@ -71,6 +71,41 @@ class PlacesService {
     }
   }
 
+  public async updatePlace(placeId: string, payload: { name: string }) {
+    try {
+      const place = await prisma.placesOfCare.update({
+        where: {
+          id: placeId,
+        },
+        data: {
+          name: payload.name,
+        },
+      });
+      return place;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async updatePlaceStatus(
+    placeId: string,
+    payload: { active: boolean }
+  ) {
+    try {
+      const place = await prisma.placesOfCare.update({
+        where: {
+          id: placeId,
+        },
+        data: {
+          active: payload.active,
+        },
+      });
+      return place;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   public async assignUser(placeId: string, userId: string) {
     try {
       const placeUser = await prisma.placesOfCare.update({
@@ -107,13 +142,19 @@ class PlacesService {
 
   public async assignService(placeId: string, serviceId: string[]) {
     try {
-      const placesServicesData = serviceId.map((serviceId) => ({
-        placeOfCareId: placeId,
-        serviceId,
-      }));
+      // eliminamos todos los servicios asignados
+      await prisma.placeOfCareServices.deleteMany({
+        where: {
+          placeOfCareId: placeId,
+        },
+      });
 
+      // Crea de nuevo los servicios
       const placeService = await prisma.placeOfCareServices.createMany({
-        data: placesServicesData,
+        data: serviceId.map((serviceId) => ({
+          placeOfCareId: placeId,
+          serviceId,
+        })),
       });
 
       return placeService;
