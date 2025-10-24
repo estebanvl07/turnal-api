@@ -79,6 +79,14 @@ class TurnService {
           };
         });
 
+        if (counts.length === 0) {
+          throw new RequestError({
+            status: HTTPStatusCode.BadRequest,
+            message: "No se encontro lugar de atencion con el servicio",
+            code: "PLACE_OF_CARE_NOT_FOUND",
+          });
+        }
+
         const placesWithCount = await Promise.all(counts);
 
         // Busca el lugar de atencion con menor cantidad de turnos
