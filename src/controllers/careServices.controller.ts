@@ -3,6 +3,24 @@ import careServiceService from "@/services/careService/careService.service";
 import { RequestError } from "@/utils/errorHandler";
 import HTTPStatusCode from "@/config/httpStatusCode";
 
+export const removeServiceFromCareCenter: RequestHandler = (req, res) => {
+  try {
+    const centerId = req.params.centerId;
+    const serviceId = req.params.serviceId;
+
+    const careService = careServiceService.removeServiceFromCareCenter({
+      centerId,
+      serviceId,
+    });
+    res.status(HTTPStatusCode.OK).json({ data: careService });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};
 export const getCareServices: RequestHandler = (req, res) => {
   try {
     const centerId = req.isSuperAdmin

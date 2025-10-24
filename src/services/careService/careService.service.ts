@@ -77,9 +77,9 @@ class CareService {
     }
   }
 
-  public getCareServicesByCenter({ centerId }: { centerId: string }) {
+  public async getCareServicesByCenter({ centerId }: { centerId: string }) {
     try {
-      const careServices = prisma.careCenterServices.findMany({
+      const careServices = await prisma.careCenterServices.findMany({
         where: {
           careCenterId: centerId,
         },
@@ -94,9 +94,9 @@ class CareService {
     }
   }
 
-  public getCareServiceById(id: string) {
+  public async getCareServiceById(id: string) {
     try {
-      const careService = prisma.careCenterServices.findUnique({
+      const careService = await prisma.careCenterServices.findUnique({
         where: {
           id,
         },
@@ -109,6 +109,88 @@ class CareService {
     } catch (error) {
       throw error;
     }
+  }
+
+  public async removeServiceFromCareCenter({
+    centerId,
+    serviceId,
+  }: {
+    centerId: string;
+    serviceId: string;
+  }) {
+    return prisma.$transaction(async (prisma) => {
+      // buscamos el servicio dentro del los asignados al centro
+      const careService = await prisma.careCenterServices.findMany({
+        where: { careCenterId: centerId, serviceId: serviceId },
+      });
+
+      if (!careService) {
+        // si no se encuentra el servicio, termina
+        console.warn(`CareCenterService ${serviceId} no encontrado`);
+        return null;
+      }
+
+      // buscamos los turnos no finalizados
+      const turnsAssociated = await prisma.turn.findMany({
+        where: {
+          careCenterId: centerId,
+          serviceId,
+          status: {
+            final: false,
+          },
+          unfinishedTurn: null,
+        },
+      });
+
+      // limpiamos los turnos no finalizados
+      const unfinishedTurns = turnsAssociated.map(async (turn) => {
+        await prisma.unfinishedTurn.create({
+          data: {
+            turnId: turn.id,
+            userId: turn.userId,
+          },
+        });
+      });
+
+      await Promise.all(unfinishedTurns);
+
+      // limpiamos los lugares de atencion que tengan ese servicio
+      const placesOfCareAssociated = await prisma.placesOfCare.findMany({
+        where: {
+          centerId,
+          services: {
+            some: {
+              serviceId: serviceId,
+            },
+          },
+        },
+      });
+
+      // eliminamos los servicios de los lugares de atencion
+      const placesOfCareDeletedServices = placesOfCareAssociated.map(
+        async (place) => {
+          await prisma.placeOfCareServices.deleteMany({
+            where: {
+              placeOfCareId: place.id,
+              serviceId,
+            },
+          });
+        }
+      );
+
+      await Promise.all(placesOfCareDeletedServices);
+
+      // eliminarmos el servicio
+      await prisma.careCenterServices.deleteMany({
+        where: {
+          id: {
+            in: careService.map((careService) => careService.id),
+          },
+        },
+      });
+
+      return careService;
+    });
   }
 }
 

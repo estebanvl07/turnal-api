@@ -66,6 +66,7 @@ model CareCenter {
   turns               Turn[]
   status              TurnStatus[]
   placeOfCareServices PlaceOfCareServices[]
+  priority            Priority[]
   
   @@index([id, ipsId])
 }
@@ -109,6 +110,8 @@ model PlacesOfCare {
   updatedAt       DateTime @default(now())
   centerId        String
   userId          String?
+
+  active          Boolean @default(true)
   
   center          CareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
   user            User? @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -168,7 +171,13 @@ model Priority {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
 
+  centerId String
+
+  center CareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
   turns Turn[]
+
+  @@index([id, centerId])
+  @@unique([id, centerId])
 }
 
 model Turn {

@@ -6,6 +6,49 @@ import { RequestHandler } from "express";
 
 export const getPlaces = () => {};
 
+export const updatePlace: RequestHandler = async (req, res): Promise<any> => {
+  try {
+    const { name } = req.body as { name: string };
+    const { placeId } = req.params;
+
+    if (!req.isSuperAdmin && !req.isAdmin) {
+      throw new RequestError({
+        status: HTTPStatusCode.Unauthorized,
+        message: "No tienes permiso para crear un lugar",
+        code: "UNAUTHORIZED",
+      });
+    }
+
+    const place = await placesService.updatePlace(placeId, { name });
+    return res.status(HTTPStatusCode.OK).json({ data: place });
+  } catch (error) {
+    return res.status(HTTPStatusCode.BadRequest).json(error);
+  }
+};
+
+export const updatePlaceStatus: RequestHandler = async (
+  req,
+  res
+): Promise<any> => {
+  try {
+    const { active } = req.body as { active: boolean };
+    const { placeId } = req.params;
+
+    if (!req.isSuperAdmin && !req.isAdmin) {
+      throw new RequestError({
+        status: HTTPStatusCode.Unauthorized,
+        message: "No tienes permiso para crear un lugar",
+        code: "UNAUTHORIZED",
+      });
+    }
+
+    const place = await placesService.updatePlaceStatus(placeId, { active });
+    return res.status(HTTPStatusCode.OK).json({ data: place });
+  } catch (error) {
+    return res.status(HTTPStatusCode.BadRequest).json(error);
+  }
+};
+
 export const createPlace: RequestHandler = async (req, res): Promise<any> => {
   try {
     const body = req.body as CreatePlaceInput;
