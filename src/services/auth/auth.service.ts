@@ -86,6 +86,7 @@ class AuthService {
         include: {
           ips: true,
           center: true,
+          placeOfCare: true,
         },
       });
 
@@ -109,7 +110,12 @@ class AuthService {
       });
 
       return {
-        user: this.userServices.userMapper(user as unknown as UserIncludes),
+        user: {
+          ...this.userServices.userMapper(user as unknown as UserIncludes),
+          placeOfCare: user.placeOfCare,
+          ips: user.ips,
+          center: user.center,
+        },
         token,
       };
     } catch (error) {
