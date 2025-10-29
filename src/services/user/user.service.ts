@@ -1,5 +1,5 @@
 import { UserIncludes } from "@/types/prisma-types";
-import { hashPassword } from "@/utils/bcrypt";
+import { comparePassword, hashPassword } from "@/utils/bcrypt";
 import { prisma } from "@/utils/db";
 import { RepositoryError } from "@/utils/errorHandler";
 import { Prisma } from "@prisma/client";
@@ -18,7 +18,6 @@ interface UserResponse {
 }
 
 class UserService {
-
   public userMapper(user: UserIncludes): UserResponse {
     const {
       id,
@@ -119,7 +118,7 @@ class UserService {
         });
       }
 
-      const { center, placeOfCare, ips, ...userData } = user
+      const { center, placeOfCare, ips, ...userData } = user;
 
       return {
         ...this.userMapper(userData),
@@ -192,6 +191,27 @@ class UserService {
     data: Prisma.UserUncheckedUpdateInput
   ) {
     try {
+      const userFound = await prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+
+      if (!userFound) {
+        throw new RepositoryError({
+          message: "Usuario no encontrado",
+          code: "USER_NOT_FOUND",
+        });
+      }
+
+      if (data.centerId !== userFound.centerId) {
+        // quitar los lugares que tenia asignado en el centro
+        await prisma.placesOfCare.updateMany({
+          where: { userId: userFound.id },
+          data: { userId: null },
+        });
+      }
+
       const user = await prisma.user.update({
         where: {
           id: userId,
@@ -233,6 +253,53 @@ class UserService {
       }
 
       return user;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async resetPassword(
+    id: string,
+    data: { previousPassword: string; newPassword: string }
+  ) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: {
+          id,
+        },
+      });
+
+      if (!user) {
+        throw new RepositoryError({
+          message: "Usuario no encontrado",
+          code: "USER_NOT_FOUND",
+        });
+      }
+
+      const isPasswordValid = comparePassword({
+        password: data.previousPassword,
+        hash: user.password,
+      });
+
+      if (!isPasswordValid) {
+        throw new RepositoryError({
+          message: "Contraseña anterior no valida",
+          code: "INVALID_PASSWORD",
+        });
+      }
+
+      const hashedPassword = hashPassword(data.newPassword);
+
+      const updatedUser = await prisma.user.update({
+        where: {
+          id,
+        },
+        data: {
+          password: hashedPassword,
+        },
+      });
+
+      return updatedUser;
     } catch (error) {
       throw error;
     }

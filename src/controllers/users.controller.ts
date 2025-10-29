@@ -163,3 +163,19 @@ export const updateUser: RequestHandler = async (req, res) => {
     }
   }
 };
+
+export const resetPassword: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+
+    const user = await UserService.resetPassword(id, data);
+    res.status(HTTPStatusCode.OK).json({ data: user });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      res.status(error.HttpStatusCode).json(error);
+    } else {
+      res.status(HTTPStatusCode.BadRequest).json(error);
+    }
+  }
+};

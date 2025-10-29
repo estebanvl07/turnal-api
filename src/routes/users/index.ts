@@ -8,14 +8,16 @@ import {
   changePlace,
   updateUser,
   changeState,
+  resetPassword,
 } from "@controllers/users.controller";
 
 const router = express();
 
 router.get("/", getUsers);
-router.get("/:id", getUserById);
-router.get("/center/:centerId", getUsersByCenterId);
 router.post("/", createUser);
+router.get("/:id", getUserById);
+router.put("/:id/reset-password", resetPassword);
+router.get("/center/:centerId", getUsersByCenterId);
 
 router.put("/:id", updateUser);
 router.patch("/:userId/:centerId", changeCenter);
