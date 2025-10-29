@@ -219,7 +219,6 @@ class ServicesService {
       throw error;
     }
   }
-
   public async updateService(
     id: string,
     data: Prisma.ServicesUncheckedUpdateInput
@@ -236,7 +235,6 @@ class ServicesService {
       throw error;
     }
   }
-
   public async updateState(id: string, state: number) {
     try {
       const service = prisma.services.update({
