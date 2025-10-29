@@ -10,8 +10,6 @@ class StatusService {
         select: { order: true },
       });
 
-      console.log(lastStatus);
-
       const order = lastStatus ? lastStatus.order + 1 : 1;
 
       return await prisma.turnStatus.create({ data: { ...payload, order } });
