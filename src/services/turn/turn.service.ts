@@ -71,6 +71,9 @@ class TurnService {
           const count = await prisma.turn.count({
             where: {
               placesOfCareId: place.placeOfCareId,
+              status: {
+                 final: false,
+              },
               finishedTurn: {
                 id: {
                   not: undefined,
