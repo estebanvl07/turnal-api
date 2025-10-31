@@ -72,7 +72,12 @@ class TurnService {
             where: {
               placesOfCareId: place.placeOfCareId,
               status: {
-                 final: false,
+                final: false,
+              },
+              unfinishedTurn: {
+                id: {
+                  not: undefined,
+                },
               },
               finishedTurn: {
                 id: {
