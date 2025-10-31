@@ -1,12 +1,13 @@
 import { Server as SocketIoServer, type Server } from "socket.io";
 import http from "http";
+import { FRONTEND_URL } from "@/config/environments";
 
 let io: Server;
 
 export const initWebSocketServer = (expressServer: http.Server) => {
   io = new SocketIoServer(expressServer, {
     cors: {
-      origin: ["http://localhost:5173"],
+      origin: [FRONTEND_URL],
     },
   });
 
