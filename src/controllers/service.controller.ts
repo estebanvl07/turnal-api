@@ -9,9 +9,9 @@ export const createService: RequestHandler = async (req, res) => {
   try {
     if (!req.isSuperAdmin) {
       throw new RequestError({
-        status: HTTPStatusCode.Unauthorized,
+        status: HTTPStatusCode.Forbidden,
         message: "No tienes permiso para crear un servicio",
-        code: "UNAUTHORIZED",
+        code: "FORBIDDEN",
       });
     }
     const data = req.body as Omit<CreateServiceParams, "ipsId">;

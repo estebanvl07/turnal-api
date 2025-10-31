@@ -9,9 +9,9 @@ export const createCenter: RequestHandler = async (req, res) => {
   try {
     if (!req.isSuperAdmin && !req.isAdmin) {
       throw new RequestError({
-        status: HTTPStatusCode.Unauthorized,
+        status: HTTPStatusCode.Forbidden,
         message: "No tienes permiso para crear un centro",
-        code: "UNAUTHORIZED",
+        code: "FORBIDDEN",
       });
     }
 
@@ -37,7 +37,7 @@ export const getCurrentCenter: RequestHandler = async (req, res) => {
   try {
     if (!req.user?.centerId) {
       throw new RequestError({
-        status: HTTPStatusCode.Unauthorized,
+        status: HTTPStatusCode.NotFound,
         message: "No tienes un centro asignado",
         code: "CENTER_NOT_FOUND",
       });
@@ -72,14 +72,13 @@ export const getCentersById: RequestHandler = async (req, res) => {
 
 export const getTurnsByCenter: RequestHandler = async (req, res) => {
   try {
-
     const hasPermission = req.isAdmin || req.isSuperAdmin;
 
     if (!hasPermission) {
       throw new RequestError({
-        status: HTTPStatusCode.Unauthorized,
+        status: HTTPStatusCode.NotFound,
         message: "No tienes permiso para obtener los turnos",
-        code: "UNAUTHORIZED",
+        code: "CENTER_NOT_FOUND",
       });
     }
 

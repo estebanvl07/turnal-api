@@ -13,9 +13,9 @@ export const updatePlace: RequestHandler = async (req, res): Promise<any> => {
 
     if (!req.isSuperAdmin && !req.isAdmin) {
       throw new RequestError({
-        status: HTTPStatusCode.Unauthorized,
+        status: HTTPStatusCode.Forbidden,
         message: "No tienes permiso para crear un lugar",
-        code: "UNAUTHORIZED",
+        code: "FORBIDDEN",
       });
     }
 
@@ -36,9 +36,9 @@ export const updatePlaceStatus: RequestHandler = async (
 
     if (!req.isSuperAdmin && !req.isAdmin) {
       throw new RequestError({
-        status: HTTPStatusCode.Unauthorized,
+        status: HTTPStatusCode.Forbidden,
         message: "No tienes permiso para crear un lugar",
-        code: "UNAUTHORIZED",
+        code: "FORBIDDEN",
       });
     }
 
@@ -56,9 +56,9 @@ export const createPlace: RequestHandler = async (req, res): Promise<any> => {
 
     if (!req.isSuperAdmin && !req.isAdmin) {
       throw new RequestError({
-        status: HTTPStatusCode.Unauthorized,
+        status: HTTPStatusCode.Forbidden,
         message: "No tienes permiso para crear un lugar",
-        code: "UNAUTHORIZED",
+        code: "FORBIDDEN",
       });
     }
 
@@ -81,9 +81,9 @@ export const assignUser: RequestHandler = async (req, res): Promise<any> => {
 
     if (!req.isSuperAdmin && !req.isAdmin) {
       throw new RequestError({
-        status: HTTPStatusCode.Unauthorized,
+        status: HTTPStatusCode.Forbidden,
         message: "No tienes permiso para asignar un usuario",
-        code: "UNAUTHORIZED",
+        code: "FORBIDDEN",
       });
     }
 
@@ -104,9 +104,9 @@ export const assignService: RequestHandler = async (req, res): Promise<any> => {
 
     if (!req.isSuperAdmin && !req.isAdmin) {
       throw new RequestError({
-        status: HTTPStatusCode.Unauthorized,
+        status: HTTPStatusCode.Forbidden,
         message: "No tienes permiso para asignar un servicio",
-        code: "UNAUTHORIZED",
+        code: "FORBIDDEN",
       });
     }
 
