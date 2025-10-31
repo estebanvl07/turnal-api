@@ -181,7 +181,11 @@ class TurnService {
           ipsId: rest.ipsId,
         },
         include: {
-          placesOfCare: true,
+          placesOfCare: {
+            include: {
+              user: true,
+            },
+          },
           service: true,
           status: true,
         },
@@ -494,6 +498,31 @@ class TurnService {
         status: true,
       },
     });
+
+    const lastStory = await prisma.turnStatusHistory.findFirst({
+      where: {
+        turnId: id,
+      },
+      orderBy: {
+        enteredAt: "desc",
+      },
+    });
+
+    if (lastStory && turnFound.statusId !== lastStory.statusId) {
+      await prisma.turnStatusHistory.update({
+        where: {
+          id: lastStory.id,
+        },
+        data: {
+          exitedAt: new Date(),
+          durationSeconds: Math.floor(
+            (new Date().getTime() - lastStory.enteredAt.getTime()) / 1000
+          ),
+        },
+      });
+
+      this.createStoryTurn(id, turnFound.statusId);
+    }
 
     const io = getIo();
 
