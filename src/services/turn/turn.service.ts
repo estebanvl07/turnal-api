@@ -48,7 +48,7 @@ class TurnService {
        */
       let placeOfCare;
 
-      // Si no se proporciona el id del lugar de atencion se busca el primer lugar de atencion que atienda el servicio
+      // Si no se proporciona el id del lugar de atencion se buscamos los lugares de atencion que atiendan el servicio y se elige el que tenga menos turnos
       if (!placesOfCareId) {
         const serviceOfCenter = await prisma.careCenterServices.findFirst({
           where: {
@@ -75,17 +75,14 @@ class TurnService {
                 final: false,
               },
               unfinishedTurn: {
-                id: {
-                  not: undefined,
-                },
+                is: null,
               },
               finishedTurn: {
-                id: {
-                  not: undefined,
-                },
+                is: null,
               },
             },
           });
+
           return {
             placeId: place.placeOfCareId,
             count,
